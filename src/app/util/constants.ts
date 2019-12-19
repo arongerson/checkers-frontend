@@ -1,0 +1,11 @@
+export const ACTION_REGISTER = 1;
+export const ACTION_LOGIN = 2;
+export const ACTION_CHAT = 3;
+export const ACTION_PLAY = 4;
+export const ACTION_JOIN = 5;
+export const ACTION_LEAVE = 6;
+export const ACTION_RESTART = 7;
+export const ACTION_CREATE = 8;
+export const ACTION_ERROR = 9;
+export const ACTION_CONNECT = 10;
+export const ACTION_OTHER_CONNECT = 11;
