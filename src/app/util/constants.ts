@@ -9,3 +9,4 @@ export const ACTION_CREATE = 8;
 export const ACTION_ERROR = 9;
 export const ACTION_CONNECT = 10;
 export const ACTION_OTHER_CONNECT = 11;
+export const ACTION_INFO = 12;
