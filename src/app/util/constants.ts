@@ -10,3 +10,5 @@ export const ACTION_ERROR = 9;
 export const ACTION_CONNECT = 10;
 export const ACTION_OTHER_CONNECT = 11;
 export const ACTION_INFO = 12;
+export const ACTION_CLOSED = 13;
+export const ACTION_STARTED = 14;

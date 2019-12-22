@@ -6,7 +6,8 @@ import { LayoutModule } from '@angular/cdk/layout';
 import {
   MatCardModule,
   MatInputModule,
-  MatButtonModule
+  MatButtonModule,
+  MatMenuModule
 } from '@angular/material';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -29,6 +30,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     MatCardModule,
     MatInputModule,
     MatButtonModule,  
+    MatMenuModule,
     BrowserAnimationsModule
   ],
   providers: [],

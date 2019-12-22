@@ -1,26 +1,40 @@
 <style>
+
+    .container {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
     .title {
         padding: 0 1rem;
+        background-color:#333;
+        color: white;
     }
 
     .body {
         display: flex;
+        position: relative;
+        background-color: #000;
+        flex: 1 1 auto;
+        height: 100%;
     }
 
     #board {
         flex: 1 1 auto;
-        background-color:gray;
         margin-left: 1rem;
+        position: relative;
     }
 
     .controls {
         max-width: 25rem;
-        min-width: 20rem;
+        min-width: 15rem;
         margin: 0 1rem;
+        z-index: 100;
     }
 
     .controls>div:first-child {
         margin-bottom: 1rem;
+        margin-top: 1rem;
     }
 
     .form {
@@ -33,41 +47,90 @@
         width: 100%;
     }
 
+    #canvas {
+        position: relative;
+        height: 100%;
+        background-color: black;
+    }
+
+    .menu {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+
 </style>
 
-<h1 class="title">Checkers</h1>
-<div class="body">
-    <div id="board">
-    </div>
-    <div class="controls">
-        <div>
-            <mat-card>
-                <mat-card-title>Create game</mat-card-title>
-                <mat-card-content>
-                    <mat-form-field class="full-width">
-                        <input matInput placeholder="Your name" [(ngModel)]="playerName" required>
-                    </mat-form-field>
-                    <button mat-raised-button color="primary" class="full-width" (click)="create()">
-                        Create
-                    </button>
-                </mat-card-content>
-            </mat-card>
-        </div>
-        <div>
-            <mat-card>
-                <mat-card-title>Join game</mat-card-title>
-                <mat-card-content>
-                    <mat-form-field class="full-width">
-                        <input matInput placeholder="Your name" [(ngModel)]="joinName" required>
-                    </mat-form-field>
-                    <mat-form-field class="full-width">
-                        <input matInput placeholder="Game code" [(ngModel)]="gameCode" required>
-                    </mat-form-field>
-                    <button mat-raised-button color="primary" class="full-width" (click)="join()">
-                        Join
-                    </button>
-                </mat-card-content>
-            </mat-card>
+<div id="canvas" *ngIf="gameStarted">
+    <button mat-button [matMenuTriggerFor]="menu" class="menu">
+        Menu
+    </button>
+    <mat-menu #menu="matMenu">
+        <button mat-menu-item>Close</button>
+    </mat-menu>
+</div>
+<div class="container"  *ngIf="!gameStarted">
+
+    <div class="title"><h1>Checkers</h1></div>
+    <div class="body" id="body" (resize)="onResize()">
+        <div class="controls">
+            <div *ngIf="!gameCreated">
+                <mat-card>
+                    <mat-card-title>Create game</mat-card-title>
+                    <mat-card-content>
+                        <mat-form-field class="full-width">
+                            <input matInput placeholder="Your name" [(ngModel)]="playerName" required>
+                        </mat-form-field>
+                        <button 
+                            [disabled]="buttonDisabled"
+                            mat-raised-button 
+                            color="primary" 
+                            class="full-width" 
+                            (click)="create()">
+                            Create
+                        </button>
+                    </mat-card-content>
+                </mat-card>
+            </div>
+            <div *ngIf="!gameCreated">
+                <mat-card>
+                    <mat-card-title>Join game</mat-card-title>
+                    <mat-card-content>
+                        <mat-form-field class="full-width">
+                            <input matInput placeholder="Your name" [(ngModel)]="joinName" required>
+                        </mat-form-field>
+                        <mat-form-field class="full-width">
+                            <input matInput placeholder="Game code" [(ngModel)]="gameCode" required>
+                        </mat-form-field>
+                        <button 
+                            [disabled]="buttonDisabled"
+                            mat-raised-button 
+                            color="primary" 
+                            class="full-width" 
+                            (click)="join()">
+                            Join
+                        </button>
+                    </mat-card-content>
+                </mat-card>
+            </div>
+            <div *ngIf="gameCreated">
+                <mat-card>
+                    <mat-card-title>Waiting for playmate</mat-card-title>
+                    <mat-card-content>
+                        <p>
+                            Send the code <strong>{{generatedCode}}</strong> to your playmate for him/her to join
+                            the game
+                        </p>
+                        <button 
+                            mat-raised-button 
+                            color="primary" 
+                            class="full-width" 
+                            (click)="delete()">
+                            Delete
+                        </button>
+                    </mat-card-content>
+                </mat-card>
+            </div>
         </div>
     </div>
 </div>
