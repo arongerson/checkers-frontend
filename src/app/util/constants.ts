@@ -11,7 +11,7 @@ export const ACTION_CONNECT = 10;
 export const ACTION_OTHER_CONNECT = 11;
 export const ACTION_INFO = 12;
 export const ACTION_CLOSED = 13;
-export const ACTION_STARTED = 14;
+export const ACTION_STATE = 14;
 
 export const OFFSET_X_ATTR = "xOffset";
 export const OFFSET_Y_ATTR = "yOffset";

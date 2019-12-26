@@ -2,17 +2,7 @@ import { Injectable } from '@angular/core';
 
 import { StorageService } from './storage.service';
 import { CREATOR_ID, JOINER_ID } from '../util/constants';
-
-interface Position {
-  row: number;
-  col: number;
-}
-
-interface Play {
-  from: Position;
-  to: Position;
-  captured: Position;
-}
+import { Play, Position} from '../model/interface';
 
 import {
   OFFSET_X_ATTR, 
@@ -24,6 +14,7 @@ import {
   TYPE_NORMAL
 } from '../util/constants';
 import { $$ } from 'protractor';
+import { runInThisContext } from 'vm';
 
 @Injectable({
   providedIn: 'root'
@@ -34,40 +25,92 @@ export class BoardService {
   private playerInTurn: number; // the id of the player who is in turn
   private playerId: number;
   private hasCaptured = false;
+  private hasCapturedDuringMove = false;
   // this is set after the first successful move during the turn
   // it is checked for further moves to prevent un-played pieces from being dragged
   private draggedPiece;
   private captured = [];
+  // calculated at the beginning of the turn to determine the number of pieces that should be
+  // captured
+  private numberOfPiecesToBeCaptured: number; 
   private plays: Play[] = [];
-  startX: number;
-  startY: number;
+  private playCompleted = false;
+  // original row and column before the piece is moved
+  private row: number;
+  private col: number;
 
   constructor(private storage: StorageService) {
   }
 
-  setPlayData(playData) {
-    this.checkers = playData.checkers;
-    this.playerInTurn = playData.turn;
+  /**
+   * 
+   * @param playData called once when the board is created
+   */
+  public initBoard(gameState) {
+    this.checkers = gameState.checkers;
+    this.playerInTurn = gameState.turn;
     this.playerId = this.storage.getPlayerId();
+    if (this.isPlayerInTurn()) {
+      this.initTurn();
+    }
   }
 
-  setDraggedPiece(piece) {
+  public updatePlay(plays: Play[]) {
+    for (let play of plays) {
+      console.log(play);
+    }
+  }
+
+  /**
+   * called once when the player is in turn
+   */
+  public initTurn() {
+    this.restoreCapturedPiecesOwnership();
+    this.hasCaptured = false;
+    this.draggedPiece = null;
+    this.captured = [];
+    this.plays = [];
+    this.playCompleted = false;
+    this.calculateMaxNumberOfPiecesToBeCaptured();
+    console.log("to be captured: " + this.numberOfPiecesToBeCaptured);
+  }
+
+  /**
+   * called at the beginning of every move
+   */
+  public initMove() {
+    this.hasCapturedDuringMove = false;
+  }
+
+  public setDraggedPiece(piece) {
     this.draggedPiece = piece;
   }
 
-  updatePlayerInTurn(playerInTurn: number) {
+  public updatePlayerInTurn(playerInTurn: number) {
     this.playerInTurn = playerInTurn;
   }
 
-  getCheckers() {
+  public getPlays(): Play[] {
+    return this.plays;
+  }
+
+  public getPlayCompleted() {
+    return this.playCompleted;
+  }
+
+  public  getCheckers() {
     return this.checkers;
   }
 
-  getChecker(row, col) {
+  public getChecker(row, col) {
     return this.checkers[row][col];
   }
 
-  saveCapturePlay(from, to) {
+  public hasCapturedAll() {
+    return this.captured.length === this.numberOfPiecesToBeCaptured;
+  }
+
+  public saveCapturePlay(from, to) {
     let lastCaptured = this.getLastPieceCaptured();
     this.plays.push({
       from: {row: from[0], col: from[1]},
@@ -76,7 +119,7 @@ export class BoardService {
     });
   }
 
-  saveMovePlay(from, to) {
+  public saveMovePlay(from, to) {
     this.plays.push({
       from: {row: from[0], col: from[1]},
       to: {row: to[0], col: to[1]},
@@ -84,24 +127,24 @@ export class BoardService {
     });
   }
 
-  getDraggedPiece(draggedElement) {
+  public getDraggedPiece(draggedElement) {
     let row = draggedElement.getAttribute(ROW_ATTRIBUTE);
     let col = draggedElement.getAttribute(COL_ATTRIBUTE);
     let piece = this.getPiece(row, col);
     return piece;
   }
 
-  getPiece(row: number, col: number) {
+  public getPiece(row: number, col: number) {
     return this.checkers[row][col].piece;
   }
 
-  notSameChecker(checker, target) {
+  public notSameChecker(checker, target) {
     let targetRow = parseInt(target.getAttribute(ROW_ATTRIBUTE));
     let targetCol = parseInt(target.getAttribute(COL_ATTRIBUTE));
     return checker.row !== targetRow || checker.column !== targetCol;
   }
 
-  getLandingChecker(element, size) {
+  public getLandingChecker(element, size) {
     let leftTop = this.getLeftTopSize(element);
     for (let rowCheckers of this.checkers) {
       for (let checker of rowCheckers) {
@@ -116,15 +159,15 @@ export class BoardService {
     return null;
   }
 
-  isPlayableChecker(row, col) {
+  public isPlayableChecker(row, col) {
     return (row + col) % 2 === 1;
   }
 
-  didCapture() {
+  public didCapture() {
     return this.hasCaptured;
   }
 
-  isLandingChecker(draggedElementCoords, checkerCoords, size) {
+  public isLandingChecker(draggedElementCoords, checkerCoords, size) {
     let xDiff = Math.abs(draggedElementCoords[0] - checkerCoords[0]);
     let yDiff = Math.abs(draggedElementCoords[1] - checkerCoords[1]);
     if (xDiff < size && yDiff < size) {
@@ -135,7 +178,7 @@ export class BoardService {
     return false;
   }
 
-  getLeftTopSize(element) {
+  public getLeftTopSize(element) {
     let rect = element.getBoundingClientRect();
     return [rect.left, rect.top];
   }
@@ -154,7 +197,7 @@ export class BoardService {
    *    i. The space in the surrounding diagonal is empty
    * 7. If further capture, restrict movement to the piece that was played first
    */
-  isPieceMovable(pieceElement) {
+  public isPieceMovable(pieceElement) {
     let piece = this.getDraggedPiece(pieceElement);
     return this.isPlayerInTurn()
         && this.playerOwnsPiece(piece)
@@ -171,26 +214,43 @@ export class BoardService {
    * switch turn
    * check crowning
    */
-  finalizePieceMove() {
+  public finalizePieceMove(draggedPiece) {
     this.playerInTurn = -this.playerInTurn;
+    this.processTypeChange(draggedPiece);
+    this.restoreCapturedPiecesOwnership();
+    this.removeCapturedPiecesFromBoard();
+    this.playCompleted = true;
+  }
+
+  private processTypeChange(piece) {
+    if (!this.isKing(piece) && this.isPieceAtLastRow(piece)) {
+      piece.type = TYPE_KING;
+    }
+  }
+
+  private removeCapturedPiecesFromBoard() {
+    for (let piece of this.captured) {
+      this.removePieceFromChecker(piece);
+      piece.element.parentNode.removeChild(piece.element);
+    }
   }
 
   /**
    * 
    * @param piece the piece being dragged
    */
-  isDifferentPiece(piece) {
+  private isDifferentPiece(piece) {
     return this.itemExists(this.draggedPiece) && this.draggedPiece !== piece;
   }
 
-  isValidMove(movedPiece, landingChecker) {
+  public isValidMove(movedPiece, landingChecker) {
     if (this.isKing(movedPiece)) {
       return this.isValidKingPlay(movedPiece, landingChecker);
     }
     return this.isValidOrdinaryPlay(movedPiece, landingChecker);
   }
 
-  isValidKingPlay(movedPiece, landingChecker) {
+  private isValidKingPlay(movedPiece, landingChecker) {
     let pieceRowCol = [movedPiece.row, movedPiece.col];
     let checkerRowCol = [landingChecker.row, landingChecker.column];
     let piecesBetween = this.getPiecesBetweenPath(pieceRowCol, checkerRowCol);
@@ -203,19 +263,20 @@ export class BoardService {
            this.hasObeyedCapturingRules();
   }
 
-  isValidKingMove(piecesBetween) {
+  private isValidKingMove(piecesBetween) {
     return piecesBetween.length === 0;
   }
 
-  isValidKingCapture(piecesBetween) {
-    this.hasCaptured = piecesBetween.length === 1 && !this.playerOwnsPiece(piecesBetween[0]);
-    if (this.hasCaptured) {
-      this.captured.push(piecesBetween[0]);
+  private isValidKingCapture(piecesBetween) {
+    this.hasCapturedDuringMove = piecesBetween.length === 1 && !this.playerOwnsPiece(piecesBetween[0]);
+    if (this.hasCapturedDuringMove) {
+      this.hasCaptured = true;
+      this.processCapturedPiece(piecesBetween[0]);
     }
-    return this.hasCaptured;
+    return this.hasCapturedDuringMove;
   }
 
-  getPiecesBetweenPath(pos1, pos2) {
+  private getPiecesBetweenPath(pos1, pos2) {
     let rowTraverse = pos2[0] - pos1[0] < 0 ? -1 : 1;
     let colTraverse = pos2[1] - pos1[1] < 0 ? -1 : 1;
     let row = pos1[0] + rowTraverse;
@@ -233,66 +294,31 @@ export class BoardService {
     return pieces;
   }
 
-  /**
-   * this is not the final update since there might still be more moves to be made
-   * @param piece the piece being played
-   * @param landingChecker 
-   */
-  updateCapturing(piece, landingChecker) {
-    this.removePieceFromChecker(piece);
-    // this.removeCapturedPieceFromBoard();
-    this. changeCapturedPieceOwner();
-    this.placePieceInTheLandingChecker(piece, landingChecker);
-  }
-
-  cancelLastCaptureUpdate(piece, prevRow, prevCol) {
-    this.removePieceFromChecker(piece);
-    this.placeInPreviousChecker(piece, prevRow, prevCol);
-    // this.returnLastCapturedPiece();
-    this. changeCapturedPieceOwner();
-    this.removeLastCapturedPieceFromList();
-  }
-
-  updateMove(draggedPiece, checker) {
+  public updatePlayingPieceAfterMove(draggedPiece, checker) {
+    this.saveFirstPosition(draggedPiece);
     this.removePieceFromChecker(draggedPiece);
     this.placePieceInTheLandingChecker(draggedPiece, checker);
   }
 
-  removeLastCapturedPieceFromList() {
-    this.captured.pop();
-  }
-
-  removePieceFromChecker(piece) {
-    this.checkers[piece.row][piece.col].piece = null;
-  }
-
-  placeInPreviousChecker(piece, prevRow, prevCol) {
-    let checker = this.checkers[prevRow][prevCol];
-    checker.piece = piece;
-    piece.row = prevRow;
-    piece.col = prevCol;
-  }
-
-  returnLastCapturedPiece() {
-    let lastCaptured = this.getLastPieceCaptured();
-    let checker = this.checkers[lastCaptured.row][lastCaptured.col];
-    checker.piece = lastCaptured;
+  private saveFirstPosition(draggedPiece) {
+    if (this.isFirstMove()) {
+      this.row = draggedPiece.row;
+      this.col = draggedPiece.col;
+    }
   }
 
   /**
-   * at this point the pieceElement has already been removed from the canvas
+   * this method is called before the play(move) is saved
    */
-  removeCapturedPieceFromBoard() {
-    let lastCaptured = this.getLastPieceCaptured();
-    this.removePieceFromChecker(lastCaptured);
+  private isFirstMove() {
+    return this.plays.length === 0;
   }
 
-  changeCapturedPieceOwner() {
-    let lastCaptured = this.getLastPieceCaptured();
-    lastCaptured.owner.id = -lastCaptured.owned.id;
+  private removePieceFromChecker(piece) {
+    this.checkers[piece.row][piece.col].piece = null;
   }
 
-  placePieceInTheLandingChecker(piece, landingChecker) {
+  private placePieceInTheLandingChecker(piece, landingChecker) {
     piece.row = landingChecker.row;
     piece.col = landingChecker.column;
     landingChecker.piece = piece;
@@ -303,18 +329,18 @@ export class BoardService {
    * @param piece the piece being played, at this point its position
    * has already been updated
    */
-  shouldCaptureMore(piece) {
+  public shouldCaptureMore(piece) {
     return this.hasCaptured &&
            !this.ordinaryPieceAtLastRow(piece) &&
            !this.canCapture(this.isKing(piece), piece.row, piece.col) &&
            this.couldCaptureMore(piece.row, piece.col);
   }
 
-  ordinaryPieceAtLastRow(piece) {
+  private ordinaryPieceAtLastRow(piece) {
     return !this.isKing(piece) && this.isPieceAtLastRow(piece);
   }
 
-  isPieceAtLastRow(piece) {
+  private isPieceAtLastRow(piece) {
     return (piece.owner.id === CREATOR_ID && piece.row === this.checkers.length - 1) ||
            (piece.owner.id === JOINER_ID && piece.row === 0);
   }
@@ -330,7 +356,7 @@ export class BoardService {
    * @param checkerRow row index of the last landing checker
    * @param checkerCol column index of the last landing checker
    */
-  couldCaptureMore(checkerRow, checkerCol) {
+  private couldCaptureMore(checkerRow, checkerCol) {
     let lastCaptured = this.getLastPieceCaptured();
     let rowTraverse = checkerRow - lastCaptured.row < 0 ? -1 : 1;
     let colTraverse = checkerCol - lastCaptured.col < 0 ? -1 : 1;
@@ -353,7 +379,7 @@ export class BoardService {
     return false;
   }
 
-  getLastPieceCaptured() {
+  private getLastPieceCaptured() {
     return this.captured[this.captured.length - 1];
   }
 
@@ -363,7 +389,7 @@ export class BoardService {
    * @param movedPiece
    * @param landingChecker 
    */
-  isValidOrdinaryPlay(movedPiece, landingChecker) {
+  private isValidOrdinaryPlay(movedPiece, landingChecker) {
     let pieceRowCol = [movedPiece.row, movedPiece.col];
     let checkerRowCol = [landingChecker.row, landingChecker.column];
     return !this.itemExists(landingChecker.piece) &&
@@ -375,48 +401,53 @@ export class BoardService {
            this.hasObeyedCapturingRules();
   }
 
-  hasObeyedCapturingRules() {
-    if (this.shouldCapture()) {
-      return this.hasCaptured;
+  private hasObeyedCapturingRules() {
+    if (this.hasCaptured) {
+      return this.hasCapturedDuringMove === true;
     }
     return true;
   }
 
-  isInDiagonal(rowCol1: number[], rowCol2: number[]) {
+  private isInDiagonal(rowCol1: number[], rowCol2: number[]) {
     return Math.abs(rowCol2[0] - rowCol1[0]) === Math.abs(rowCol2[1] - rowCol1[1]);
   }
 
-  isValidOrdinaryMove(prevPosition, landingChecker) {
+  private isValidOrdinaryMove(prevPosition, landingChecker) {
     return this.isOneUnitForwardMove(prevPosition[0], landingChecker.row) &&
            !this.itemExists(landingChecker.piece);
   }
 
-  isOneUnitForwardMove(prevRow, finalRow) {
+  private isOneUnitForwardMove(prevRow, finalRow) {
     return prevRow + this.playerId === finalRow;
   }
 
-  isValidOrdinaryCapture(fromRowCol, toRowCol) {
-    this.hasCaptured = this.isTwoUnitsApart(fromRowCol[0], toRowCol[0]) && 
+  private isValidOrdinaryCapture(fromRowCol, toRowCol) {
+    this.hasCapturedDuringMove = this.isTwoUnitsApart(fromRowCol[0], toRowCol[0]) && 
            this.hasOpponentPieceInPath(fromRowCol, toRowCol);
-    return this.hasCaptured;
+    return this.hasCapturedDuringMove;
   }
 
-  isTwoUnitsApart(row1, row2) {
+  private isTwoUnitsApart(row1, row2) {
     return Math.abs(row2 - row1) === 2;
   }
 
-  hasOpponentPieceInPath(fromRowCol, toRowCol) {
+  private hasOpponentPieceInPath(fromRowCol, toRowCol) {
     let row = Math.floor((fromRowCol[0] + toRowCol[0]) / 2);
     let col = Math.floor((fromRowCol[1] + toRowCol[1]) / 2);
     let piece = this.checkers[row][col].piece;
     let result = this.itemExists(piece) && !this.playerOwnsPiece(piece);
     if (result) {
-      this.captured.push(piece);
+      this.hasCaptured = true;
     }
     return result;
   }
 
-  shouldCapture() {
+  private processCapturedPiece(piece) {
+    piece.owner.id = -piece.owned.id;
+    this.captured.push(piece);
+  }
+
+  private shouldCapture() {
     for (let rowCheckers of this.checkers) {
       for (let checker of rowCheckers) {
         let piece = checker.piece;
@@ -429,26 +460,60 @@ export class BoardService {
     return false;
   }
 
-  checkerHasPieceBelongingToPlayer(checker) {
+  private calculateMaxNumberOfPiecesToBeCaptured() {
+    let max = 0;
+    for (let rowCheckers of this.checkers) {
+      for (let checker of rowCheckers) {
+        if (this.checkerHasPieceBelongingToPlayer(checker)) {
+          let num = this.calculateMaxNumberAPieceCanCapture(checker);
+          max = Math.floor(Math.max(max, num));
+        }
+      }
+    }
+    this.numberOfPiecesToBeCaptured = max;
+  }
+
+  private calculateMaxNumberAPieceCanCapture(checker) {
+    const {row, col} = checker.piece;
+    let num = 0;
+    if (this.isKing(checker.piece)) {
+      num = this.getKingMaxPossibleCaptures([checker]);
+    } else {
+      num = this.getOrdinaryPieceMaxPossibleCaptures(checker.piece);
+    }
+    checker.piece.row = row;
+    checker.piece.col = col;
+    this.restoreCapturedPiecesOwnership();
+    return num;
+  }
+
+  private restoreCapturedPiecesOwnership() {
+    for (let piece of this.captured) {
+      piece.owner.id = -piece.owner.id;
+    }
+    this.captured = [];
+  }
+
+  private checkerHasPieceBelongingToPlayer(checker) {
     return this.isPlayableChecker(checker.row, checker.column) && 
            this.itemExists(checker.piece) &&
            this.playerOwnsPiece(checker.piece);
   }
 
-  playerOwnsPiece(piece) {
+  private playerOwnsPiece(piece) {
     return piece.owner.id === this.playerId;
   }
 
-  isPlayerInTurn() {
+  private isPlayerInTurn() {
     return this.playerId === this.playerInTurn;
   }
 
-  canCaptureMore(piece) {
+  public canCaptureMore(piece) {
     return !this.ordinaryPieceAtLastRow(piece) &&
             this.canCapture(this.isKing(piece), piece.row, piece.col);
   }
 
-  canCapture(isKing, row, col) {
+  private canCapture(isKing, row, col) {
     if (isKing) {
       return this.canKingCapture(row, col);
     } else {
@@ -456,25 +521,30 @@ export class BoardService {
     }
   }
 
-  canKingCapture(row, col) {
-    let nextOccupiedLeftForwardChecker = this.nextOccupiedLeftForwardChecker(row, col);
-    let nextOccupiedRightForwardChecker = this.nextOccupiedRightForwardChecker(row, col);
-    let nextOccupiedLeftBackwardChecker = this.nextOccupiedLeftBackwardChecker(row, col);
-    let nextOccupiedRightBackwardChecker = this.nextOccupiedRightBackwardChecker(row, col);
+  private canKingCapture(row, col) {
+    let nextOccupiedLeftForwardChecker = this.getNextOccupiedChecker(row, col, this.getLeftForwardChecker);
+    let nextOccupiedRightForwardChecker = this.getNextOccupiedChecker(row, col, this.getRightForwardChecker);
+    let nextOccupiedLeftBackwardChecker = this.getNextOccupiedChecker(row, col, this.getLeftBackwardChecker);
+    let nextOccupiedRightBackwardChecker = this.getNextOccupiedChecker(row, col, this.getRightBackwardChecker);
     return this.isLeftForwardCapturable(nextOccupiedLeftForwardChecker) ||
            this.isRightForwardCapturable(nextOccupiedRightForwardChecker) ||
            this.isLeftBackwardCapturable(nextOccupiedLeftBackwardChecker) ||
            this.isRightBackwardCapturable(nextOccupiedRightBackwardChecker);
   }
 
-  getKingMaxPossibleCaptures(emptyCheckers) {
+  /**
+   * this method changed the ownership of the pieces ought be captured,
+   * when the method completes, the ownership should be restored
+   * @param emptyCheckers 
+   */
+  private getKingMaxPossibleCaptures(emptyCheckers: any[]) {
     let max = 0;
     for (let emptyChecker of emptyCheckers) {
-      const { row, column } = emptyCheckers;
-      let leftForwardChecker = this.nextOccupiedLeftForwardChecker(row, column);
-      let rightForwardChecker = this.nextOccupiedRightForwardChecker(row, column);
-      let leftBackwardChecker = this.nextOccupiedLeftBackwardChecker(row, column);
-      let rightBackwardChecker = this.nextOccupiedRightBackwardChecker(row, column);
+      const { row, column } = emptyChecker;
+      let leftForwardChecker = this.getNextOccupiedChecker(row, column, this.getLeftForwardChecker);
+      let rightForwardChecker = this.getNextOccupiedChecker(row, column, this.getRightForwardChecker);
+      let leftBackwardChecker = this.getNextOccupiedChecker(row, column, this.getLeftBackwardChecker);
+      let rightBackwardChecker = this.getNextOccupiedChecker(row, column, this.getRightBackwardChecker);
 
       let leftForwardCount = 0, rightForwardCount = 0, leftBackwardCount = 0, rightBackwardCount = 0;
       if (this.isLeftForwardCapturable(leftForwardChecker)) {
@@ -495,10 +565,11 @@ export class BoardService {
     return max;
   }
 
-  getKingMaxPossibleCapturesAux(nextChecker, fartherCheckerMethod) {
+  private getKingMaxPossibleCapturesAux(nextChecker, fartherCheckerMethod) {
     let captured = nextChecker.piece;
     // update the captured piece owner to current player to avoid back-capturing
     captured.owner.id = -captured.owner.id;
+    this.captured.push(captured);
     let capturedRow = captured.row;
     let capturedCol = captured.col;
     let fartherChecker = fartherCheckerMethod(capturedRow, capturedCol);
@@ -513,7 +584,7 @@ export class BoardService {
     return count;
   }
 
-  getEmptyCheckersFromCapturedPiece(checker, traverseVector) {
+  private getEmptyCheckersFromCapturedPiece(checker, traverseVector) {
     let row = checker.row + traverseVector[0];
     let col = checker.column + traverseVector[1];
     let emptyCheckers = [];
@@ -529,47 +600,17 @@ export class BoardService {
     return emptyCheckers;
   }
 
-  nextOccupiedLeftForwardChecker(row, col) {
-    let checker = null;
-    do {
-      row = row + this.playerId;
-      col = col - 1;
-      checker = this.nextChecker(row, col);
-    } while(this.isEmptyChecker(checker));
-    return checker;
+  private getNextOccupiedChecker(row, col, nextCheckerMethod) {
+    let checker;
+    while ((checker = nextCheckerMethod(row, col)) != null) {
+      if (this.itemExists(checker.piece)) {
+        return checker;
+      }
+    }
+    return null;
   }
 
-  nextOccupiedRightForwardChecker(row, col) {
-    let checker = null;
-    do {
-      row = row + this.playerId;
-      col = col + 1;
-      checker = this.nextChecker(row, col);
-    } while(this.isEmptyChecker(checker));
-    return checker;
-  }
-
-  nextOccupiedLeftBackwardChecker(row, col) {
-    let checker = null;
-    do {
-      row = row - this.playerId;
-      col = col - 1;
-      checker = this.nextChecker(row, col);
-    } while(this.isEmptyChecker(checker));
-    return checker;
-  }
-
-  nextOccupiedRightBackwardChecker(row, col) {
-    let checker = null;
-    do {
-      row = row - this.playerId;
-      col = col + 1;
-      checker = this.nextChecker(row, col);
-    } while(this.isEmptyChecker(checker));
-    return checker;
-  }
-
-  canOrdinaryCapture(row, col) {
+  private canOrdinaryCapture(row, col) {
     let leftForwardChecker = this.getLeftForwardChecker(row, col);
     let rightForwardChecker = this.getRightForwardChecker(row, col);
     let leftBackwardChecker = this.getLeftBackwardChecker(row, col);
@@ -580,7 +621,14 @@ export class BoardService {
            this.isRightBackwardCapturable(rightBackwardChecker);
   }
 
-  getOrdinaryPieceMaxPossibleCaptures(piece) {
+  /**
+   * this method changes the owner of the pieces to be captured, these pieces are
+   * saved in an array that restores the owner when the method completes
+   * this method changes the position of the capturing piece, this location should be restored
+   * when the method completes
+   * @param piece 
+   */
+  private getOrdinaryPieceMaxPossibleCaptures(piece) {
     if (this.isPieceAtLastRow(piece)) {
       return 0;
     }
@@ -605,15 +653,16 @@ export class BoardService {
     return this.maxOfFour(leftForwardCount, rightForwardCount, leftBackwardCount, rightBackwardCount);
   }
 
-  maxOfFour(num1, num2, num3, num4) {
+  private maxOfFour(num1, num2, num3, num4) {
     let max1 = Math.max(num1, num2);
     let max2 = Math.max(num3, num4);
     return Math.floor(Math.max(max1, max2));
   }
 
-  getOrdinaryPieceMaxPossibleCapturesAux(piece, nextChecker, fartherCheckerMethod) {
+  private getOrdinaryPieceMaxPossibleCapturesAux(piece, nextChecker, fartherCheckerMethod) {
     const { row, col} = piece;
     let captured = nextChecker.piece;
+    this.captured.push(captured);
     let capturedRow = captured.row;
     let capturedCol = captured.col;
     let fartherChecker = fartherCheckerMethod(capturedRow, capturedCol);
@@ -630,8 +679,8 @@ export class BoardService {
     return count;
   }
 
-  isLeftForwardCapturable(leftForwardChecker) {
-    if (this.isOpponentPiece(leftForwardChecker)) {
+  private isLeftForwardCapturable(leftForwardChecker) {
+    if (this.itemExists(leftForwardChecker) && this.isOpponentPiece(leftForwardChecker)) {
       let row = leftForwardChecker.row;
       let col = leftForwardChecker.column;
       let fartherLeftForwardChecker = this.getLeftForwardChecker(row, col);
@@ -640,8 +689,8 @@ export class BoardService {
     return false;
   }
 
-  isRightForwardCapturable(rightForwardChecker) {
-    if (this.isOpponentPiece(rightForwardChecker)) {
+  private isRightForwardCapturable(rightForwardChecker) {
+    if (this.itemExists(rightForwardChecker) && this.isOpponentPiece(rightForwardChecker)) {
       let row = rightForwardChecker.row;
       let col = rightForwardChecker.column;
       let fartherRightForwardChecker = this.getRightForwardChecker(row, col);
@@ -650,8 +699,8 @@ export class BoardService {
     return false;
   }
 
-  isLeftBackwardCapturable(rightBackwardChecker) {
-    if (this.isOpponentPiece(rightBackwardChecker)) {
+  private isLeftBackwardCapturable(rightBackwardChecker) {
+    if (this.itemExists(rightBackwardChecker) && this.isOpponentPiece(rightBackwardChecker)) {
       let row = rightBackwardChecker.row;
       let col = rightBackwardChecker.column;
       let fartherLeftBackwardChecker = this.getRightBackwardChecker(row, col);
@@ -660,8 +709,8 @@ export class BoardService {
     return false;
   }
 
-  isRightBackwardCapturable(rightBackwardChecker) {
-    if (this.isOpponentPiece(rightBackwardChecker)) {
+  private isRightBackwardCapturable(rightBackwardChecker) {
+    if (this.itemExists(rightBackwardChecker) && this.isOpponentPiece(rightBackwardChecker)) {
       let row = rightBackwardChecker.row;
       let col = rightBackwardChecker.column;
       let fartherRightBackwardChecker = this.getRightBackwardChecker(row, col);
@@ -670,46 +719,46 @@ export class BoardService {
     return false;
   }
 
-  isOpponentPiece(checker) {
+  private isOpponentPiece(checker) {
     // the checker exists and is owned by the opponent
     return this.itemExists(checker) && this.itemExists(checker.piece) && !this.playerOwnsPiece(checker.piece);
   }
 
-  hasEmptyForwardChecker(piece) {
+  private hasEmptyForwardChecker(piece) {
     let leftChecker = this.getLeftForwardChecker(piece.row, piece.col);
     let rightChecker = this.getRightForwardChecker(piece.row, piece.col);
     return this.isEmptyChecker(leftChecker) || this.isEmptyChecker(rightChecker);
   }
 
-  hasEmptyBackwardChecker(piece) {
+  private hasEmptyBackwardChecker(piece) {
     let leftChecker = this.getLeftBackwardChecker(piece.row, piece.col);
     let rightChecker = this.getRightBackwardChecker(piece.row, piece.col);
     return this.isEmptyChecker(leftChecker) || this.isEmptyChecker(rightChecker);
   }
 
-  isKingAndHasEmptyBackwardChecker(piece) {
+  private isKingAndHasEmptyBackwardChecker(piece) {
     if (!this.isKing(piece)) {
       return false;
     }
     return this.hasEmptyBackwardChecker(piece);
   }
 
-  isKing(piece) {
+  private isKing(piece) {
     return piece.type === TYPE_KING;
   }
 
-  isEmptyChecker(checker) {
+  private isEmptyChecker(checker) {
     // the checker exists but it has no piece
     return this.itemExists(checker) && !this.itemExists(checker.piece);
   }
 
-  itemExists(item) {
+  public itemExists(item) {
     return item !== undefined && item !== null;
   }
 
   // given the choice of playerIds, the row will increase for the creator
   // but decrease for the joiner
-  getLeftForwardChecker(row: number, col: number) {
+  private getLeftForwardChecker(row: number, col: number) {
     let nextRow = row + this.playerId;
     let nextCol = col - 1;
     return this.nextChecker(nextRow, nextCol);
@@ -717,7 +766,7 @@ export class BoardService {
 
   // given the choice of playerIds, the row will increase for the creator
   // but decrease for the joiner
-  getRightForwardChecker(row: number, col: number) {
+  private getRightForwardChecker(row: number, col: number) {
     let nextRow = row + this.playerId;
     let nextCol = col + 1;
     return this.nextChecker(nextRow, nextCol);
@@ -725,7 +774,7 @@ export class BoardService {
 
   // given the choice of playerIds, the row will decrease for the creator
   // but decrease for the joiner
-  getLeftBackwardChecker(row: number, col: number) {
+  private getLeftBackwardChecker(row: number, col: number) {
     let nextRow = row - this.playerId;
     let nextCol = col--;
     return this.nextChecker(nextRow, nextCol);
@@ -733,24 +782,24 @@ export class BoardService {
 
   // given the choice of playerIds, the row will decrease for the creator
   // but decrease for the joiner
-  getRightBackwardChecker(row: number, col: number) {
+  private getRightBackwardChecker(row: number, col: number) {
     let nextRow = row - this.playerId;
     let nextCol = col++;
     return this.nextChecker(nextRow, nextCol);
   }
 
-  nextChecker(row, col) {
+  private nextChecker(row, col) {
     if (this.indicesWithinBounds(row, col)) {
       return this.checkers[row][col];
     }
     return null;
   }
 
-  indicesWithinBounds(row, col) {
+  private indicesWithinBounds(row, col) {
     return this.indexWithinBounds(row) && this.indexWithinBounds(col);
   }
 
-  indexWithinBounds(index) {
+  private indexWithinBounds(index) {
     return index >= 0 && index <= 7;
   }
 

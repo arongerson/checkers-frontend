@@ -9,7 +9,7 @@ import { PieceMoveProcessor } from '../../model/pieceMoveProcessor';
 import {
   ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
   ACTION_LEAVE, ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
-  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STARTED
+  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STATE
 } from '../../util/constants';
 
 import {
@@ -130,9 +130,12 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
       console.log('game other connect: ' + JSON.stringify(data.data));
     } else if (code === ACTION_PLAY) {
       let playData = JSON.parse(payLoad.data);
-      this.board.setPlayData(playData);
+      this.board.updatePlay(playData);
+    } else if (code === ACTION_STATE) {
+      let gameState = JSON.parse(payLoad.data);
+      this.board.initBoard(gameState);
       this.processPlay();
-    } else if (code === ACTION_REGISTER) {
+    }  else if (code === ACTION_REGISTER) {
       console.log('game register: ' + JSON.stringify(data.data));
     } else if (code === ACTION_INFO) {
       console.log('game info: ' + payLoad.data.info);
@@ -145,6 +148,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
 
   mouseDown = (e) => {
     if (this.isDraggable(e.target)) {
+      this.board.initMove();
       this.draggedElement = e.target;
       this.draggedPiece = this.board.getDraggedPiece(this.draggedElement);
       this.draggedPiece.element.style.zIndex = '20';
@@ -185,6 +189,9 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
         this.draggedElement = null;
         this.draggedPiece.element.style.zIndex = '10';
         this.draggedPiece = null;
+        if (this.board.getPlayCompleted()) {
+          this.socketService.sendPlayUpdate(this.webSocket, this.board.getPlays());
+        }
     }
   } 
 

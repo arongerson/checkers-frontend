@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { throwError } from 'rxjs';
+import { Play, Position} from '../model/interface';
 
 import { StorageService } from './storage.service';
 
 import {
   ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
   ACTION_LEAVE, ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
-  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STARTED
+  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED
 } from '../util/constants';
 
 const HOST = '192.168.0.11:8080';
@@ -48,6 +49,16 @@ export class WebSocketsService {
             code: gameCode
           }
         )
+      }
+    ));
+  }
+
+  sendPlayUpdate(webSocket, plays: Play[]) {
+    console.log(JSON.stringify(plays));
+    webSocket.send(JSON.stringify(
+      {
+        code: ACTION_PLAY,
+        data: JSON.stringify(plays)
       }
     ));
   }
