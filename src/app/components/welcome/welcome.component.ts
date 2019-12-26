@@ -1,10 +1,22 @@
 import { Component, OnInit, AfterViewInit, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { WebSocketsService } from '../../services/web-sockets.service';
+import { BoardService } from '../../services/board.service';
+import { UtilService } from '../../services/util.service';
+import { StorageService } from '../../services/storage.service';
+import { PieceMoveProcessor } from '../../model/pieceMoveProcessor';
+
 import {
   ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
   ACTION_LEAVE, ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
   ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STARTED
+} from '../../util/constants';
+
+import {
+  OFFSET_X_ATTR, 
+  OFFSET_Y_ATTR,
+  ROW_ATTRIBUTE,
+  COL_ATTRIBUTE
 } from '../../util/constants';
 
 @Component({
@@ -24,22 +36,39 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   gameStarted = false;
   generatedCode: string;
 
+  listenersAdded = false;
+
+  // playData = null;
   canvas: any;
+
+  initialX = 0;
+  initialY = 0;
+  currentX = 0;
+  currentY = 0;
+  offsetX = 0;
+  offsetY = 0;
+  draggedElement: any;
+  draggedPiece: any;
 
   constructor(
     private socketService: WebSocketsService,
+    private board: BoardService,
+    private util: UtilService,
+    private storage: StorageService,
     private router: Router
   ) {}
 
   ngOnInit() {
-    this.gameCreated = this.socketService.initGameCreated();
-    this.gameStarted = this.socketService.initGameStarted();
-    this.generatedCode = this.socketService.getGameCode();
+    this.gameCreated = this.storage.initGameCreated();
+    this.gameStarted = this.storage.initGameStarted();
+    this.generatedCode = this.storage.getGameCode();
     this.connect();
   }
 
   ngAfterViewInit() {
-    this.drawCheckers();
+    if (!this.gameStarted) {
+      this.drawCheckers();
+    }
   }
 
   drawCheckers() {
@@ -57,20 +86,8 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     let size = 4;
     for (let i = 0; i < Math.ceil(height/ size) + 1; i++) {
       for (let j = 0; j < Math.ceil(width/ size); j++) {
-        let div = document.createElement('div');
-        let actualWidth = ((j + 1) * size) < width ? size : width - (j * size);
-        let actualHeight = ((i + 1) * size) < height ? size : height - (i * size);
-        div.style.height = `${actualHeight}px`;
-        div.style.width = `${actualWidth}px`;
-        div.style.position = `absolute`;
-        div.style.left = `${j * size}px`;
-        div.style.top = `${i * size}px`;
-        if ((i + j) % 2 == 0) {
-          div.style.backgroundColor = `#111`;
-        } else {
-          div.style.backgroundColor = `#000`;
-        }
-        element.appendChild(div);
+        let backgroundChecker = this.util.getBackgroundChecker(i, j, width, height, size);
+        element.appendChild(backgroundChecker);
       }
     }
   }
@@ -102,7 +119,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
       console.log('game chat: ' + JSON.stringify(data.data));
     } else if (code === ACTION_CONNECT) {
       console.log('game connect: ' + JSON.stringify(data.data));
-      this.socketService.saveToken(payLoad.data);
+      this.storage.saveToken(payLoad.data);
     } else if (code === ACTION_ERROR) {
       console.log('game error: ' + JSON.stringify(data.data));
     } else if (code === ACTION_LEAVE) {
@@ -112,7 +129,9 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     } else if (code === ACTION_OTHER_CONNECT) {
       console.log('game other connect: ' + JSON.stringify(data.data));
     } else if (code === ACTION_PLAY) {
-      this.processPlay(payLoad.data);
+      let playData = JSON.parse(payLoad.data);
+      this.board.setPlayData(playData);
+      this.processPlay();
     } else if (code === ACTION_REGISTER) {
       console.log('game register: ' + JSON.stringify(data.data));
     } else if (code === ACTION_INFO) {
@@ -124,25 +143,103 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     }
   }
 
-  processPlay = (data) => {
-    let content = JSON.parse(data);
-    this.socketService.saveGameStarted();
-    console.log(JSON.stringify(content));
+  mouseDown = (e) => {
+    if (this.isDraggable(e.target)) {
+      this.draggedElement = e.target;
+      this.draggedPiece = this.board.getDraggedPiece(this.draggedElement);
+      this.draggedPiece.element.style.zIndex = '20';
+      if (e.type === "touchstart") {
+        this.initialX = e.touches[0].clientX - parseFloat(this.draggedElement.getAttribute(OFFSET_X_ATTR));
+        this.initialY = e.touches[0].clientY - parseFloat(this.draggedElement.getAttribute(OFFSET_Y_ATTR));
+      } else {
+        this.initialX = e.clientX - parseFloat(this.draggedElement.getAttribute(OFFSET_X_ATTR));
+        this.initialY = e.clientY - parseFloat(this.draggedElement.getAttribute(OFFSET_Y_ATTR));
+      }
+    }
+  }
+
+  mouseMove = (e) => {
+    if (this.draggedElement !== undefined && this.draggedElement !== null) {
+      e.preventDefault();
+      if (e.type === "touchmove") {
+          this.currentX = e.touches[0].clientX - this.initialX;
+          this.currentY = e.touches[0].clientY - this.initialY;
+      } else {
+          this.currentX = e.clientX - this.initialX;
+          this.currentY = e.clientY - this.initialY;
+      }
+      this.offsetX = this.currentX;
+      this.offsetY = this.currentY;
+      this.draggedElement.setAttribute(OFFSET_X_ATTR, this.currentX.toString());
+      this.draggedElement.setAttribute(OFFSET_Y_ATTR, this.currentY.toString());
+      this.setTranslate(this.currentX, this.currentY, this.draggedElement);
+    }
+  }
+
+  mouseUp = (e) => {
+    if (this.draggedElement !== undefined && this.draggedElement !== null) {
+        this.initialX = this.currentX;
+        this.initialY = this.currentY;
+        console.log(this.canvas.startX, this.canvas.startY, this.canvas.size);
+        PieceMoveProcessor.processPieceMove(this.draggedPiece, this.board, this.canvas, e.target);
+        this.draggedElement = null;
+        this.draggedPiece.element.style.zIndex = '10';
+        this.draggedPiece = null;
+    }
+  } 
+
+  setTranslate(xPos, yPos, element) {
+    if (this.draggedElement) {
+        this.draggedPiece.element.style.transform = "translate3d(" + xPos + "px, " + yPos + "px, 0)";
+    }
+  }
+
+  isDraggable(element) {
+    return this.isPiece(element) && this.board.isPieceMovable(element);
+  }
+
+  isPiece(element) {
+    let index = element.getAttribute(ROW_ATTRIBUTE);
+    return index !== null;
+  }
+
+  addEventListeners() {
+    if (!this.listenersAdded) {
+      // mouse listeners
+      this.canvas.addEventListener('mousedown', this.mouseDown, false);
+      this.canvas.addEventListener('mousemove', this.mouseMove, false);
+      this.canvas.addEventListener('mouseup', this.mouseUp, false);
+      // touch listeners
+      this.canvas.addEventListener('touchstart', this.mouseDown, false);
+      this.canvas.addEventListener('touchmove', this.mouseMove, false);
+      this.canvas.addEventListener('touchend', this.mouseUp, false);
+      this.listenersAdded = true;
+    }
+  }
+
+  processPlay = () => {
+    let checkers = this.board.getCheckers();
+    console.log(JSON.stringify(checkers))
+    this.storage.saveGameStarted();
     this.gameStarted = true;
-    let checkers = content.checkers;
     this.initCanvas();
     this.initCanvasSizeAndStartPositions();
+    this.canvas.innerHTML = "";
     for(let i = 0; i < checkers.length; i++) {
       let rowCheckers = checkers[i];
       for (let j = 0; j < rowCheckers.length; j++) {
         let checker = rowCheckers[j];
-        let checkerElement = this.getChecker(i, j);
+        let checkerElement = this.util.getCheckerElement(this.canvas, i, j);
+        checker.element = checkerElement;
         this.canvas.appendChild(checkerElement);
-        if (checker.hasOwnProperty('piece')) {
+        if (checker.hasOwnProperty('piece') && this.board.itemExists(checker.piece)) {
           let piece = checker.piece;
+          piece.row = i;
+          piece.col = j;
           let owner = piece.owner;
-          let color = (owner.id === 0) ? 'yellow' : 'black';
-          let pieceElement = this.getPiece(color, i, j, piece.type);
+          let color = (owner.id === 1) ? 'crimson' : 'black';
+          let pieceElement = this.util.getPieceElement(this.canvas, color, i, j, piece.type);
+          piece.element = pieceElement;
           this.canvas.appendChild(pieceElement);
         }
       }
@@ -161,54 +258,12 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     }
   }
 
-  getChecker = (i: number, j: number) => {
-    let canvas = this.canvas;
-    const { width, height, size, startX, startY} = canvas;
-    let div = document.createElement('div');
-    let actualWidth = ((j + 1) * canvas.size) < width ? size : width - (j * size);
-    let actualHeight = ((i + 1) * size) < height ? size : height - (i * size);
-    div.style.height = `${actualHeight}px`;
-    div.style.width = `${actualWidth}px`;
-    div.style.position = `absolute`;
-    div.style.left = `${startX + j * size}px`;
-    div.style.top = `${startY + i * size}px`;
-    let color = (i + j) % 2 == 0 ? 'crimson' : 'white';
-    div.style.backgroundColor = color;
-    return div;
-  }
-
-  getPiece(color: string, row: number, col: number, type: number) {
-    const { startX, startY, size } = this.canvas;
-    let xlinkNS = "http://www.w3.org/1999/xlink";
-    let svgNS = "http://www.w3.org/2000/svg";
-    let svg = document.createElementNS(svgNS, "svg");
-    var circle = document.createElementNS(svgNS, "circle");
-    circle.setAttributeNS(null,"cx",`${size/2}`);
-    circle.setAttributeNS(null,"cy",`${size/2}`);
-    circle.setAttributeNS(null,"r",`${(size/2) - 10}`);
-    circle.setAttributeNS(null,"fill", color);
-    circle.setAttributeNS(null,"stroke-width","4");
-    circle.setAttributeNS(null,"stroke","green");
-    svg.appendChild(circle);
-    svg.setAttributeNS(null,"width",`${size}`);
-    svg.setAttributeNS(null,"height",`${size}`);
-    let div = document.createElement('div');
-    div.style.width = `${size}px`;
-    div.style.height = `${size}px`;
-    div.style.position = "absolute";
-    div.style.left = `${startX + col*size}px`;
-    div.style.top = `${startY + row*size}px`;
-    div.style.zIndex = '10';
-    // div.style.backgroundColor = "transparent";
-    div.appendChild(svg);
-    return div;
-  }
-
   initCanvas = () => {
     this.canvas = document.getElementById('canvas');
     let rect = this.canvas.getBoundingClientRect();
     this.canvas.width = rect.width;
     this.canvas.height = rect.height;
+    this.addEventListeners();
   }
 
   getWidthAndHeight = () => {
@@ -221,45 +276,19 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
 
   processGameCreated = (data) => {
     let content = JSON.parse(data);
-    this.socketService.saveGameCreated();
+    this.storage.saveGameCreated();
     this.generatedCode = content.gameCode;
-    this.socketService.saveGameCode(this.generatedCode);
-    this.socketService.savePlayerId(content.playerId);
+    this.storage.saveGameCode(this.generatedCode);
+    this.storage.savePlayerId(content.playerId);
     this.buttonDisabled = false;
     this.gameCreated = true;
   }
 
   processGameJoined = (data) => {
     let content = JSON.parse(data);
-    this.socketService.savePlayerId(content.playerId);
+    this.storage.savePlayerId(content.playerId);
     this.buttonDisabled = false;
     this.gameStarted = true;
-  }
-
-  createGame(playerName: string) {
-    this.buttonDisabled = true;
-    this.webSocket.send(JSON.stringify(
-      {
-        code: ACTION_CREATE,
-        data: playerName
-      }
-    ));
-  }
-
-  joinGame(playerName: string, gameCode: string) {
-    this.buttonDisabled = true;
-    this.webSocket.send(JSON.stringify(
-      {
-        code: ACTION_JOIN,
-        data: JSON.stringify(
-          {
-            name: playerName,
-            code: gameCode
-          }
-        )
-      }
-    ));
-    console.log(playerName, gameCode);
   }
 
   deleteGame() {
@@ -275,17 +304,24 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   }
 
   create() {
-    this.createGame(this.playerName);
+    this.buttonDisabled = true;
+    this.socketService.createGame(this.webSocket, this.playerName);
   }
 
   join() {
-    this.joinGame(this.joinName, this.gameCode);
+    this.buttonDisabled = true;
+    this.socketService.joinGame(this.webSocket, this.joinName, this.gameCode);
   }
 
   @HostListener('window:resize', ['$event'])
   onResize(event) {
-    this.updateCheckers();
+    if (!this.gameStarted) {
+      this.updateCheckers();
+    }
+    let checkers = this.board.getCheckers();
+    if (checkers) {
+      this.processPlay();
+    }
   }
 
 }
-
