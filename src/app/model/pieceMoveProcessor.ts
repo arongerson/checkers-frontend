@@ -3,6 +3,7 @@ import {
     OFFSET_X_ATTR, OFFSET_Y_ATTR
 } from '../util/constants';
 import { BoardService } from '../services/board.service';
+import { UtilService } from '../services/util.service';
 
 export class PieceMoveProcessor {
 
@@ -81,15 +82,9 @@ export class PieceMoveProcessor {
    * @param checker the checker to snap to
    */
   private static snapPiece(piece, checker, canvas) {
-    const { startX, startY, size} = canvas;
-    piece.element.style.left = `${startX + checker.column * size}px`;
-    piece.element.style.top = `${startY + checker.row * size}px`;
-    piece.element.style.transform = 'none';
+    UtilService.positionElementOnTheBoard(piece, canvas);
     let circle = piece.element.firstChild.firstChild;
-    circle.setAttribute(ROW_ATTRIBUTE, checker.row.toString());
-    circle.setAttribute(COL_ATTRIBUTE, checker.column.toString());
-    circle.setAttribute(OFFSET_X_ATTR, '0');
-    circle.setAttribute(OFFSET_Y_ATTR, '0'); 
+    UtilService.setCircleAttributes(circle, checker.row, checker.column, 0, 0);
   }
     
   private static removeCapturedPieceFromCanvas(board, canvas) {

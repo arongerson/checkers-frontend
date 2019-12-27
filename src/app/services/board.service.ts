@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 
 import { StorageService } from './storage.service';
+import { UtilService } from './util.service'; 
 import { CREATOR_ID, JOINER_ID } from '../util/constants';
 import { Play, Position} from '../model/interface';
 
@@ -70,7 +71,6 @@ export class BoardService {
   }
 
   public updatePlay(data, canvas) {
-    const { startX, startY, size} = canvas;
     let playsText = data.plays;
     let plays = JSON.parse(playsText);
     for (let play of plays) {
@@ -79,29 +79,36 @@ export class BoardService {
       let fromChecker = this.checkers[from.row][from.col];
       let toChecker = this.checkers[to.row][to.col];
       let piece = fromChecker.piece;
-      console.log(piece);
       toChecker.piece = piece;
       piece.row = to.row;
       piece.col = to.col;
       fromChecker.piece = null;
-
-      piece.element.style.left = `${startX + to.col * size}px`;
-      piece.element.style.top = `${startY + to.row * size}px`;
-
+      UtilService.positionElementOnTheBoard(piece, canvas);
       let circle = piece.element.firstChild.firstChild;
-      circle.setAttribute(ROW_ATTRIBUTE, to.row.toString());
-      circle.setAttribute(COL_ATTRIBUTE, to.col.toString());
-      circle.setAttribute(OFFSET_X_ATTR, '0');
-      circle.setAttribute(OFFSET_Y_ATTR, '0'); 
-      let captured = play.captured;
-      if (captured !== null) {
-        let cPiece = this.checkers[captured.row][captured.col].piece;
-        this.checkers[captured.row][captured.col].piece = null;
-        cPiece.element.parentNode.removeChild(cPiece.element);
-      }
+      UtilService.setCircleAttributes(circle, to.row, to.col, 0, 0);
+      this.removeCapturedPiece(play.captured);
     }
+    this.updateTypeIfKing(plays);
     this.playerInTurn = -this.playerInTurn;
     this.initTurn();
+  }
+
+  private removeCapturedPiece(captured) {
+    if (captured !== null) {
+      let cPiece = this.checkers[captured.row][captured.col].piece;
+      this.checkers[captured.row][captured.col].piece = null;
+      cPiece.element.parentNode.removeChild(cPiece.element);
+    }
+  }
+
+  updateTypeIfKing(plays) {
+    let lastPlay = plays.pop();
+    let to = lastPlay.to;
+    let piece = this.checkers[to.row][to.col].piece;
+    if (this.isPieceAtLastRow(piece)) {
+      piece.type = TYPE_KING;
+      UtilService.setKingCircle(piece);
+    }
   }
 
   /**
@@ -267,9 +274,8 @@ export class BoardService {
 
   private processTypeChange(piece) {
     if (!this.isKing(piece) && this.isPieceAtLastRow(piece)) {
-      console.log("king");
       piece.type = TYPE_KING;
-      console.log(piece);
+      UtilService.setKingCircle(piece);
     }
   }
 
@@ -396,7 +402,6 @@ export class BoardService {
   }
 
   private isPieceAtLastRow(piece) {
-    console.log(piece.owner.id, piece.row, this.checkers.length );
     return (piece.owner.id === CREATOR_ID && piece.row === this.checkers.length - 1) ||
            (piece.owner.id === JOINER_ID && piece.row === 0);
   }

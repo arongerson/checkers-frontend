@@ -9,7 +9,7 @@ import { PieceMoveProcessor } from '../../model/pieceMoveProcessor';
 import {
   ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
   ACTION_LEAVE, ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
-  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STATE
+  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STATE, ACTION_OVER
 } from '../../util/constants';
 
 import {
@@ -35,7 +35,6 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   gameCreated = false;
   gameStarted = false;
   generatedCode: string;
-
   listenersAdded = false;
 
   // playData = null;
@@ -129,12 +128,14 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
       console.log('game other connect: ' + JSON.stringify(data.data));
     } else if (code === ACTION_PLAY) {
       let playData = JSON.parse(payLoad.data);
-      // console.log(JSON.stringify(playData));
       this.board.updatePlay(playData, this.canvas);
     } else if (code === ACTION_STATE) {
       let gameState = JSON.parse(payLoad.data);
       this.board.initBoard(gameState);
       this.processPlay();
+    } else if (code === ACTION_OVER) {
+      let gameState = JSON.parse(payLoad.data);
+      console.log(JSON.stringify(gameState))
     }  else if (code === ACTION_REGISTER) {
       console.log('game register: ' + JSON.stringify(data.data));
     } else if (code === ACTION_INFO) {

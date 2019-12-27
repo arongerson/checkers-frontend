@@ -37,7 +37,7 @@ export class UtilService {
     let svgContainer = this.getSvgContainer(size);
     let pieceDivElem = this.getPieceDivElement(startX, startY, row, col, size);
     svgContainer.appendChild(circle);
-    if (type !== TYPE_KING) {
+    if (type === TYPE_KING) {
       let kingCircle = this.getKingCircle(size);
       svgContainer.appendChild(kingCircle);
     }
@@ -76,6 +76,13 @@ export class UtilService {
     let strokeWidth = this.getStrokeWidth(radius);
     circle.setAttributeNS(null,"stroke-width", `${strokeWidth}`);
     return circle;
+  }
+
+  public static setKingCircle(piece) {
+    let divElement = piece.element;
+    let svgContainer = divElement.firstChild;
+    let kingCircle = this.getKingCircle(svgContainer.clientWidth);
+    svgContainer.appendChild(kingCircle);
   }
 
   public static getStrokeWidth(radius) {
@@ -131,5 +138,12 @@ export class UtilService {
     let color = ((row + col) % 2 == 0) ? '#111' : '#000';
     div.style.backgroundColor = color;
     return div;
+  }
+
+  public static positionElementOnTheBoard(piece, canvas) {
+    const {startX, startY, size} = canvas;
+    piece.element.style.left = `${startX + piece.col * size}px`;
+    piece.element.style.top = `${startY + piece.row * size}px`;
+    piece.element.style.transform = 'none';
   }
 }
