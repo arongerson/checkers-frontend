@@ -16,7 +16,7 @@ export class UtilService {
 
   constructor() { }
 
-  getCheckerElement = (canvas, row: number, col: number) => {
+  public static getCheckerElement = (canvas, row: number, col: number) => {
     const { width, height, size, startX, startY} = canvas;
     let div = document.createElement('div');
     let actualWidth = ((col + 1) * canvas.size) < width ? size : width - (col * size);
@@ -31,7 +31,7 @@ export class UtilService {
     return div;
   }
 
-  getPieceElement(canvas, color: string, row: number, col: number, type: number) {
+  public static getPieceElement(canvas, color: string, row: number, col: number, type: number) {
     const { startX, startY, size } = canvas;
     let circle = this.getCircle(row, col, color, size);
     let svgContainer = this.getSvgContainer(size);
@@ -45,7 +45,7 @@ export class UtilService {
     return pieceDivElem;
   }
 
-  getPieceDivElement(startX, startY, row, col, size) {
+  public static getPieceDivElement(startX, startY, row, col, size) {
     let div = document.createElement('div');
     div.style.width = `${size}px`;
     div.style.height = `${size}px`;
@@ -56,7 +56,7 @@ export class UtilService {
     return div;
   }
 
-  getSvgContainer(size) {
+  public static getSvgContainer(size) {
     let svgNS = "http://www.w3.org/2000/svg";
     let svg = document.createElementNS(svgNS, "svg");
     svg.setAttributeNS(null,"width",`${size}`);
@@ -64,7 +64,7 @@ export class UtilService {
     return svg;
   }
 
-  getKingCircle(size) {
+  public static getKingCircle(size) {
     let svgNS = "http://www.w3.org/2000/svg";
     let circle = document.createElementNS(svgNS, "circle");
     let radius = (size/2) - PIECE_EDGE_OFFSET;
@@ -78,7 +78,7 @@ export class UtilService {
     return circle;
   }
 
-  getStrokeWidth(radius) {
+  public static getStrokeWidth(radius) {
     let ratio = radius/5;
     if (ratio > 3) {
       return 5
@@ -88,7 +88,7 @@ export class UtilService {
     return 1;
   }
 
-  getCircle(row, col, color,  size) {
+  public static getCircle(row, col, color,  size) {
     let svgNS = "http://www.w3.org/2000/svg";
     let circle = document.createElementNS(svgNS, "circle");
     circle.setAttributeNS(null,"cx",`${size/2}`);
@@ -98,24 +98,28 @@ export class UtilService {
     circle.setAttributeNS(null,"fill", color);
     circle.addEventListener('mouseover', this.mouseOverEffect);
     circle.addEventListener('mouseout', this.mouseOutEffect);
-    circle.setAttribute(ROW_ATTRIBUTE, row.toString());
-    circle.setAttribute(COL_ATTRIBUTE, col.toString());
-    circle.setAttribute(OFFSET_X_ATTR, '0');
-    circle.setAttribute(OFFSET_Y_ATTR, '0'); 
+    this.setCircleAttributes(circle, row, col, 0, 0);
     return circle;
   }
 
-  mouseOverEffect = (e) => {
+  public static setCircleAttributes(circle, row, col, xOffset, yOffset) {
+    circle.setAttribute(ROW_ATTRIBUTE, `${row}`);
+    circle.setAttribute(COL_ATTRIBUTE, `${col}`);
+    circle.setAttribute(OFFSET_X_ATTR, `${xOffset}`);
+    circle.setAttribute(OFFSET_Y_ATTR, `${yOffset}`); 
+  }
+
+  public static mouseOverEffect = (e) => {
     e.target.setAttributeNS(null,"stroke-width","4");
     e.target.setAttributeNS(null,"stroke","green");
   }
 
-  mouseOutEffect = (e) => {
+  public static mouseOutEffect = (e) => {
     e.target.setAttributeNS(null,"stroke-width","0");
     e.target.setAttributeNS(null,"stroke","green");
   }
 
-  getBackgroundChecker(row: number, col: number, width: number, height: number, size: number) {
+  public static getBackgroundChecker(row: number, col: number, width: number, height: number, size: number) {
     let div = document.createElement('div');
     let actualWidth = ((col + 1) * size) < width ? size : width - (col * size);
     let actualHeight = ((row + 1) * size) < height ? size : height - (row * size);

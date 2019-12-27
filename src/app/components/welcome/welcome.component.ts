@@ -53,7 +53,6 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   constructor(
     private socketService: WebSocketsService,
     private board: BoardService,
-    private util: UtilService,
     private storage: StorageService,
     private router: Router
   ) {}
@@ -86,7 +85,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     let size = 4;
     for (let i = 0; i < Math.ceil(height/ size) + 1; i++) {
       for (let j = 0; j < Math.ceil(width/ size); j++) {
-        let backgroundChecker = this.util.getBackgroundChecker(i, j, width, height, size);
+        let backgroundChecker = UtilService.getBackgroundChecker(i, j, width, height, size);
         element.appendChild(backgroundChecker);
       }
     }
@@ -236,14 +235,14 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
       let rowCheckers = checkers[i];
       for (let j = 0; j < rowCheckers.length; j++) {
         let checker = rowCheckers[j];
-        let checkerElement = this.util.getCheckerElement(this.canvas, i, j);
+        let checkerElement = UtilService.getCheckerElement(this.canvas, i, j);
         checker.element = checkerElement;
         this.canvas.appendChild(checkerElement);
         if (this.board.itemExists(checker.piece)) {
           let piece = checker.piece;
           let owner = piece.owner;
           let color = (owner.id === 1) ? 'crimson' : 'black';
-          let pieceElement = this.util.getPieceElement(this.canvas, color, i, j, piece.type);
+          let pieceElement = UtilService.getPieceElement(this.canvas, color, i, j, piece.type);
           piece.element = pieceElement;
           this.canvas.appendChild(pieceElement);
         }
