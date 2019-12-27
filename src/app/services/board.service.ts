@@ -69,12 +69,39 @@ export class BoardService {
     }
   }
 
-  public updatePlay(data) {
+  public updatePlay(data, canvas) {
+    const { startX, startY, size} = canvas;
     let playsText = data.plays;
     let plays = JSON.parse(playsText);
     for (let play of plays) {
-      console.log(JSON.stringify(play));
+      let from = play.from;
+      let to = play.to;
+      let fromChecker = this.checkers[from.row][from.col];
+      let toChecker = this.checkers[to.row][to.col];
+      let piece = fromChecker.piece;
+      console.log(piece);
+      toChecker.piece = piece;
+      piece.row = to.row;
+      piece.col = to.col;
+      fromChecker.piece = null;
+
+      piece.element.style.left = `${startX + to.col * size}px`;
+      piece.element.style.top = `${startY + to.row * size}px`;
+
+      let circle = piece.element.firstChild.firstChild;
+      circle.setAttribute(ROW_ATTRIBUTE, to.row.toString());
+      circle.setAttribute(COL_ATTRIBUTE, to.col.toString());
+      circle.setAttribute(OFFSET_X_ATTR, '0');
+      circle.setAttribute(OFFSET_Y_ATTR, '0'); 
+      let captured = play.captured;
+      if (captured !== null) {
+        let cPiece = this.checkers[captured.row][captured.col].piece;
+        this.checkers[captured.row][captured.col].piece = null;
+        cPiece.element.parentNode.removeChild(cPiece.element);
+      }
     }
+    this.playerInTurn = -this.playerInTurn;
+    this.initTurn();
   }
 
   /**
@@ -242,14 +269,13 @@ export class BoardService {
     if (!this.isKing(piece) && this.isPieceAtLastRow(piece)) {
       console.log("king");
       piece.type = TYPE_KING;
-      console.log(piece.type);
+      console.log(piece);
     }
   }
 
   private removeCapturedPiecesFromBoard() {
     for (let piece of this.captured) {
       this.removePieceFromChecker(piece);
-      console.log('remove item');
       piece.element.parentNode.removeChild(piece.element);
     }
   }
@@ -272,14 +298,17 @@ export class BoardService {
   private isValidKingPlay(movedPiece, landingChecker) {
     let pieceRowCol = [movedPiece.row, movedPiece.col];
     let checkerRowCol = [landingChecker.row, landingChecker.column];
-    let piecesBetween = this.getPiecesBetweenPath(pieceRowCol, checkerRowCol);
-    return !this.itemExists(landingChecker.piece) &&
+    if (this.isInDiagonal(pieceRowCol, checkerRowCol)) {
+      let piecesBetween = this.getPiecesBetweenPath(pieceRowCol, checkerRowCol);
+      return !this.itemExists(landingChecker.piece) &&
            this.isInDiagonal(pieceRowCol, checkerRowCol) &&
            (
              this.isValidKingMove(piecesBetween) ||
              this.isValidKingCapture(piecesBetween)
            ) &&
            this.hasObeyedCapturingRules();
+    }
+    return false;
   }
 
   private isValidKingMove(piecesBetween) {
@@ -300,7 +329,7 @@ export class BoardService {
     let colTraverse = pos2[1] - pos1[1] < 0 ? -1 : 1;
     let row = pos1[0] + rowTraverse;
     let col = pos1[1] + colTraverse;
-    let numOfCheckersBetween = pos2[0] - pos1[0];
+    let numOfCheckersBetween = Math.abs(pos2[0] - pos1[0]) - 1;
     let pieces = [];
     for (let i = 0; i < numOfCheckersBetween; i++) {
       let piece = this.checkers[row][col].piece;
@@ -567,6 +596,7 @@ export class BoardService {
    */
   private getKingMaxPossibleCaptures(emptyCheckers: any[]) {
     let max = 0;
+    console.log(emptyCheckers);
     for (let emptyChecker of emptyCheckers) {
       const { row, column } = emptyChecker;
       let leftForwardChecker = this.getNextOccupiedChecker(row, column, this.getLeftForwardChecker);
@@ -632,8 +662,11 @@ export class BoardService {
     let checker;
     while ((checker = nextCheckerMethod(row, col)) != null) {
       if (this.itemExists(checker.piece)) {
+        // console.log(checker.row, checker.column);
         return checker;
       }
+      row = checker.row;
+      col = checker.column;
     }
     return null;
   }
@@ -728,11 +761,11 @@ export class BoardService {
     return false;
   }
 
-  private isLeftBackwardCapturable(rightBackwardChecker) {
-    if (this.itemExists(rightBackwardChecker) && this.isOpponentPiece(rightBackwardChecker)) {
-      let row = rightBackwardChecker.row;
-      let col = rightBackwardChecker.column;
-      let fartherLeftBackwardChecker = this.getRightBackwardChecker(row, col);
+  private isLeftBackwardCapturable(leftBackwardChecker) {
+    if (this.itemExists(leftBackwardChecker) && this.isOpponentPiece(leftBackwardChecker)) {
+      let row = leftBackwardChecker.row;
+      let col = leftBackwardChecker.column;
+      let fartherLeftBackwardChecker = this.getLeftBackwardChecker(row, col);
       return this.isEmptyChecker(fartherLeftBackwardChecker);
     }
     return false;

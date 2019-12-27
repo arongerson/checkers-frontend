@@ -130,8 +130,8 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
       console.log('game other connect: ' + JSON.stringify(data.data));
     } else if (code === ACTION_PLAY) {
       let playData = JSON.parse(payLoad.data);
-      console.log(JSON.stringify(playData));
-      this.board.updatePlay(playData);
+      // console.log(JSON.stringify(playData));
+      this.board.updatePlay(playData, this.canvas);
     } else if (code === ACTION_STATE) {
       let gameState = JSON.parse(payLoad.data);
       this.board.initBoard(gameState);
@@ -185,7 +185,6 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     if (this.draggedElement !== undefined && this.draggedElement !== null) {
         this.initialX = this.currentX;
         this.initialY = this.currentY;
-        console.log(this.canvas.startX, this.canvas.startY, this.canvas.size);
         PieceMoveProcessor.processPieceMove(this.draggedPiece, this.board, this.canvas, e.target);
         this.draggedElement = null;
         this.draggedPiece.element.style.zIndex = '10';
