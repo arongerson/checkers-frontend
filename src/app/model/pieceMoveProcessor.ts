@@ -28,16 +28,23 @@ export class PieceMoveProcessor {
     private static checkMoveType(draggedPiece, board: BoardService, canvas, checker, target) {
         if (board.didCapture()) {
           this.processPieceCaptured(draggedPiece, board, canvas, checker, target);
-        } else if (!board.hasCapturedAll()) {
-          // show message that all have to be captured
-          board.initTurn();
         } else {
-          console.log('moving');
-          board.saveMovePlay([draggedPiece.row, draggedPiece.col], [checker.row, checker.column]);
-          board.updatePlayingPieceAfterMove(draggedPiece, checker);
-          this.snapPiece(draggedPiece, checker, canvas, target);
-          board.finalizePieceMove(draggedPiece);
+          this.processNormalMove(draggedPiece, board, canvas, checker, target);
         }
+    }
+
+    private static processNormalMove(draggedPiece, board: BoardService, canvas, checker, target) {
+      let prevPieceRow = draggedPiece.row;
+      let prevPieceCol = draggedPiece.col;
+      board.updatePlayingPieceAfterMove(draggedPiece, checker);
+      board.saveMovePlay([prevPieceRow, prevPieceCol], [checker.row, checker.column]);
+      if (!board.hasCapturedAll()) {
+        this.restorePieceToOriginalLocation(draggedPiece, board, canvas, target);
+        board.initTurn();
+      } else {
+        this.snapPiece(draggedPiece, checker, canvas, target);
+        board.finalizePieceMove(draggedPiece);
+      }
     }
 
     private static processPieceCaptured(draggedPiece, board: BoardService, canvas, checker, target) {
@@ -46,17 +53,24 @@ export class PieceMoveProcessor {
       board.updatePlayingPieceAfterMove(draggedPiece, checker);
       board.saveCapturePlay([prevPieceRow, prevPieceCol], [checker.row, checker.column]);
       if (board.canCaptureMore(draggedPiece)) {
-        // player should continue capturing
         board.setDraggedPiece(draggedPiece);
         this.snapPiece(draggedPiece, checker, canvas, target);
       } else if (!board.hasCapturedAll()) {
         // show message that all have to be captured
+        console.log('not all captured');
+        this.restorePieceToOriginalLocation(draggedPiece, board, canvas, target);
         board.initTurn();
       } else {
         console.log('that was the final capture');
         this.snapPiece(draggedPiece, checker, canvas, target);
         board.finalizePieceMove(draggedPiece);
       }
+  }
+
+  private static restorePieceToOriginalLocation(draggedPiece, board, canvas, target) {
+    board.restorePlayedPiecePosition(draggedPiece);
+    let originalChecker = board.getChecker(draggedPiece.row, draggedPiece.col);
+    this.snapPiece(draggedPiece, originalChecker, canvas, target);
   }
 
   /**

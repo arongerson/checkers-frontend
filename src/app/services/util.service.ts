@@ -5,7 +5,8 @@ import {
   OFFSET_Y_ATTR,
   ROW_ATTRIBUTE,
   COL_ATTRIBUTE,
-  PIECE_EDGE_OFFSET
+  PIECE_EDGE_OFFSET,
+  TYPE_KING
 } from '../util/constants';
 
 @Injectable({
@@ -43,8 +44,10 @@ export class UtilService {
     circle.setAttributeNS(null,"fill", color);
     circle.addEventListener('mouseover', this.mouseOverEffect);
     circle.addEventListener('mouseout', this.mouseOutEffect);
-    // circle.setAttributeNS(null,"stroke-width","4");
-    // circle.setAttributeNS(null,"stroke","green");
+    if (type === TYPE_KING) {
+      circle.setAttributeNS(null,"stroke-width","2");
+      circle.setAttributeNS(null,"stroke","green");
+    }
     svg.appendChild(circle);
     svg.setAttributeNS(null,"width",`${size}`);
     svg.setAttributeNS(null,"height",`${size}`);

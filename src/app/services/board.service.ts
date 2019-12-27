@@ -50,14 +50,30 @@ export class BoardService {
     this.checkers = gameState.checkers;
     this.playerInTurn = gameState.turn;
     this.playerId = this.storage.getPlayerId();
+    this.setRowAndColToPieces();
     if (this.isPlayerInTurn()) {
       this.initTurn();
     }
   }
 
-  public updatePlay(plays: Play[]) {
+  private setRowAndColToPieces() {
+    for (let rowCheckers of this.checkers) {
+      for (let checker of rowCheckers) {
+        if (checker.hasOwnProperty('piece')) {
+          checker.piece.row = checker.row;
+          checker.piece.col = checker.column;
+        } else {
+          checker.piece = null;
+        }
+      }
+    }
+  }
+
+  public updatePlay(data) {
+    let playsText = data.plays;
+    let plays = JSON.parse(playsText);
     for (let play of plays) {
-      console.log(play);
+      console.log(JSON.stringify(play));
     }
   }
 
@@ -217,20 +233,23 @@ export class BoardService {
   public finalizePieceMove(draggedPiece) {
     this.playerInTurn = -this.playerInTurn;
     this.processTypeChange(draggedPiece);
-    this.restoreCapturedPiecesOwnership();
     this.removeCapturedPiecesFromBoard();
+    this.restoreCapturedPiecesOwnership();
     this.playCompleted = true;
   }
 
   private processTypeChange(piece) {
     if (!this.isKing(piece) && this.isPieceAtLastRow(piece)) {
+      console.log("king");
       piece.type = TYPE_KING;
+      console.log(piece.type);
     }
   }
 
   private removeCapturedPiecesFromBoard() {
     for (let piece of this.captured) {
       this.removePieceFromChecker(piece);
+      console.log('remove item');
       piece.element.parentNode.removeChild(piece.element);
     }
   }
@@ -307,6 +326,13 @@ export class BoardService {
     }
   }
 
+  public restorePlayedPiecePosition(piece) {
+    this.checkers[piece.row][piece.col].piece = null;
+    piece.row = this.row;
+    piece.col = this.col;
+    this.checkers[this.row][this.col].piece = piece;
+  }
+
   /**
    * this method is called before the play(move) is saved
    */
@@ -341,6 +367,7 @@ export class BoardService {
   }
 
   private isPieceAtLastRow(piece) {
+    console.log(piece.owner.id, piece.row, this.checkers.length );
     return (piece.owner.id === CREATOR_ID && piece.row === this.checkers.length - 1) ||
            (piece.owner.id === JOINER_ID && piece.row === 0);
   }
@@ -438,12 +465,13 @@ export class BoardService {
     let result = this.itemExists(piece) && !this.playerOwnsPiece(piece);
     if (result) {
       this.hasCaptured = true;
+      this.processCapturedPiece(piece);
     }
     return result;
   }
 
   private processCapturedPiece(piece) {
-    piece.owner.id = -piece.owned.id;
+    piece.owner.id = -piece.owner.id;
     this.captured.push(piece);
   }
 
@@ -648,6 +676,7 @@ export class BoardService {
       leftBackwardCount = this.getOrdinaryPieceMaxPossibleCapturesAux(piece, leftBackwardChecker, this.getLeftBackwardChecker);
     }
     if (this.isRightBackwardCapturable(rightBackwardChecker)) {
+      console.log('right-back')
       rightBackwardCount = this.getOrdinaryPieceMaxPossibleCapturesAux(piece, rightBackwardChecker, this.getRightBackwardChecker);
     }
     return this.maxOfFour(leftForwardCount, rightForwardCount, leftBackwardCount, rightBackwardCount);
@@ -758,7 +787,7 @@ export class BoardService {
 
   // given the choice of playerIds, the row will increase for the creator
   // but decrease for the joiner
-  private getLeftForwardChecker(row: number, col: number) {
+  private getLeftForwardChecker = (row: number, col: number) => {
     let nextRow = row + this.playerId;
     let nextCol = col - 1;
     return this.nextChecker(nextRow, nextCol);
@@ -766,7 +795,7 @@ export class BoardService {
 
   // given the choice of playerIds, the row will increase for the creator
   // but decrease for the joiner
-  private getRightForwardChecker(row: number, col: number) {
+  private getRightForwardChecker = (row: number, col: number) => {
     let nextRow = row + this.playerId;
     let nextCol = col + 1;
     return this.nextChecker(nextRow, nextCol);
@@ -774,17 +803,17 @@ export class BoardService {
 
   // given the choice of playerIds, the row will decrease for the creator
   // but decrease for the joiner
-  private getLeftBackwardChecker(row: number, col: number) {
+  private getLeftBackwardChecker = (row: number, col: number) => {
     let nextRow = row - this.playerId;
-    let nextCol = col--;
+    let nextCol = col - 1;
     return this.nextChecker(nextRow, nextCol);
   }
 
   // given the choice of playerIds, the row will decrease for the creator
   // but decrease for the joiner
-  private getRightBackwardChecker(row: number, col: number) {
+  private getRightBackwardChecker = (row: number, col: number) => {
     let nextRow = row - this.playerId;
-    let nextCol = col++;
+    let nextCol = col + 1;
     return this.nextChecker(nextRow, nextCol);
   }
 

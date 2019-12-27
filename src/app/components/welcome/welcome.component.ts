@@ -130,6 +130,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
       console.log('game other connect: ' + JSON.stringify(data.data));
     } else if (code === ACTION_PLAY) {
       let playData = JSON.parse(payLoad.data);
+      console.log(JSON.stringify(playData));
       this.board.updatePlay(playData);
     } else if (code === ACTION_STATE) {
       let gameState = JSON.parse(payLoad.data);
@@ -226,7 +227,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
 
   processPlay = () => {
     let checkers = this.board.getCheckers();
-    console.log(JSON.stringify(checkers))
+    // console.log(JSON.stringify(checkers))
     this.storage.saveGameStarted();
     this.gameStarted = true;
     this.initCanvas();
@@ -239,10 +240,8 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
         let checkerElement = this.util.getCheckerElement(this.canvas, i, j);
         checker.element = checkerElement;
         this.canvas.appendChild(checkerElement);
-        if (checker.hasOwnProperty('piece') && this.board.itemExists(checker.piece)) {
+        if (this.board.itemExists(checker.piece)) {
           let piece = checker.piece;
-          piece.row = i;
-          piece.col = j;
           let owner = piece.owner;
           let color = (owner.id === 1) ? 'crimson' : 'black';
           let pieceElement = this.util.getPieceElement(this.canvas, color, i, j, piece.type);
