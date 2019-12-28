@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Point } from '..//model/interface';
 
 import {
   OFFSET_X_ATTR, 
@@ -8,6 +9,7 @@ import {
   PIECE_EDGE_OFFSET,
   TYPE_KING
 } from '../util/constants';
+import { PathLocationStrategy } from '@angular/common';
 
 @Injectable({
   providedIn: 'root'
@@ -145,5 +147,48 @@ export class UtilService {
     piece.element.style.left = `${startX + piece.col * size}px`;
     piece.element.style.top = `${startY + piece.row * size}px`;
     piece.element.style.transform = 'none';
+  }
+
+  public static animate(piece, from: Point, to: Point) {
+    let path = this.getPath(from, to);
+    let time = 1000;
+    let n = 100;
+    for (let i = 0; i < n; i++) {
+      let waitTime = Math.floor((time/n) * i);
+      setTimeout(() => {
+        let point = path[i];
+        piece.element.style.left = `${point.x}px`;
+        piece.element.style.top = `${point.y}px`;
+      }, waitTime);
+    }
+  }
+
+  public static getPath(from: Point, to: Point) {
+    let m = this.getSlope(from, to);
+    let n = 100;
+    let increment = this.getXIncrement(from, to, n);
+    let path: Point[] = [];
+    for (let i = 0; i < n; i++) {
+      let x = from.x + i*increment;
+      let y = m*(i*increment) + from.y;
+      path.push({x: x, y: y});
+    }
+    return path;
+  }
+
+  private static getSlope(from: Point, to: Point) {
+    return (to.y - from.y)/(to.x - from.x);
+  }
+
+  private static getXIncrement(from: Point, to: Point, n: number) {
+    return (to.x - from.x) / n;
+  }
+
+  public static getElementPoint(element) {
+    let rect = element.getBoundingClientRect();
+    return {
+      x: rect.left,
+      y: rect.top
+    };
   }
 }

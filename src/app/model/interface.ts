@@ -8,3 +8,8 @@ export interface Play {
     to: Position;
     captured: Position;
 }
+
+export interface Point {
+    x: number;
+    y: number;
+}

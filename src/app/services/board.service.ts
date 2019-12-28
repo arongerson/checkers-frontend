@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { StorageService } from './storage.service';
 import { UtilService } from './util.service'; 
 import { CREATOR_ID, JOINER_ID } from '../util/constants';
-import { Play, Position} from '../model/interface';
+import { Play, Point} from '../model/interface';
 
 import {
   OFFSET_X_ATTR, 
@@ -73,7 +73,9 @@ export class BoardService {
   public updatePlay(data, canvas) {
     let playsText = data.plays;
     let plays = JSON.parse(playsText);
-    for (let play of plays) {
+    let animTime = 1000;
+    for (let i = 0; i < plays.length; i++) {
+      let play = plays[i];
       let from = play.from;
       let to = play.to;
       let fromChecker = this.checkers[from.row][from.col];
@@ -83,10 +85,17 @@ export class BoardService {
       piece.row = to.row;
       piece.col = to.col;
       fromChecker.piece = null;
-      UtilService.positionElementOnTheBoard(piece, canvas);
-      let circle = piece.element.firstChild.firstChild;
-      UtilService.setCircleAttributes(circle, to.row, to.col, 0, 0);
-      this.removeCapturedPiece(play.captured);
+
+      let fromPoint = UtilService.getElementPoint(fromChecker.element);
+      let toPoint = UtilService.getElementPoint(toChecker.element);
+      setTimeout(() => {
+        UtilService.animate(piece, fromPoint, toPoint);
+        UtilService.positionElementOnTheBoard(piece, canvas);
+        let circle = piece.element.firstChild.firstChild;
+        UtilService.setCircleAttributes(circle, to.row, to.col, 0, 0);
+        this.removeCapturedPiece(play.captured);
+      }, i*1000);
+
     }
     this.updateTypeIfKing(plays);
     this.playerInTurn = -this.playerInTurn;
