@@ -4,12 +4,13 @@ import { WebSocketsService } from '../../services/web-sockets.service';
 import { BoardService } from '../../services/board.service';
 import { UtilService } from '../../services/util.service';
 import { StorageService } from '../../services/storage.service';
-import { PieceMoveProcessor } from '../../model/pieceMoveProcessor';
+import { PieceMoveService } from '../../model/pieceMoveProcessor';
 
 import {
   ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
-  ACTION_LEAVE, ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
-  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STATE, ACTION_OVER
+  ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
+  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_OTHER_CLOSED, ACTION_STATE, ACTION_OVER, CREATOR_ID,
+  CREATOR_COLOR, JOINER_COLOR
 } from '../../util/constants';
 
 import {
@@ -34,8 +35,12 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   buttonDisabled = false;
   gameCreated = false;
   gameStarted = false;
+  gameOver = false;
+  gameTerminated = false;
   generatedCode: string;
   listenersAdded = false;
+  yourColor: string;
+  creatorColorClass: string = 'creator-color';
 
   // playData = null;
   canvas: any;
@@ -57,9 +62,15 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit() {
+    this.init();
+  }
+
+  init() {
     this.gameCreated = this.storage.initGameCreated();
     this.gameStarted = this.storage.initGameStarted();
     this.generatedCode = this.storage.getGameCode();
+    this.gameOver = this.storage.initGameOver();
+    this.listenersAdded = false;
     this.connect();
   }
 
@@ -101,54 +112,55 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   }
 
   onOpen = (data) => {
-    console.log('connected');
   }
 
   onMessage = (data) => {
     let payLoad = JSON.parse(data.data);
     let code = parseInt(payLoad.code);
-    if (code === ACTION_RESTART) {
-      console.log('game restarted: ' + JSON.stringify(data.data));
-    } else if (code === ACTION_CREATE) {
+    if (code === ACTION_CREATE) {
       this.processGameCreated(payLoad.data);
     } else if (code === ACTION_JOIN) {
       this.processGameJoined(payLoad.data);
     } else if (code === ACTION_CHAT) {
-      console.log('game chat: ' + JSON.stringify(data.data));
     } else if (code === ACTION_CONNECT) {
-      console.log('game connect: ' + JSON.stringify(data.data));
       this.storage.saveToken(payLoad.data);
     } else if (code === ACTION_ERROR) {
-      console.log('game error: ' + JSON.stringify(data.data));
-    } else if (code === ACTION_LEAVE) {
-      console.log('game leave: ' + JSON.stringify(data.data));
+    } else if (code === ACTION_CLOSED) {
+      this.gameTerminated = true;
+      this.gameCreated = false;
+      this.gameStarted = false;
+      this.gameOver = false;
+      this.storage.clearGame();
+      this.init();
+    } else if (code === ACTION_OTHER_CLOSED) {
+      this.gameTerminated = true;
+      PieceMoveService.setFeedback("Your playmate left the game");
     } else if (code === ACTION_LOGIN) {
-      console.log('game login: ' + JSON.stringify(data.data));
     } else if (code === ACTION_OTHER_CONNECT) {
-      console.log('game other connect: ' + JSON.stringify(data.data));
     } else if (code === ACTION_PLAY) {
       let playData = JSON.parse(payLoad.data);
+      PieceMoveService.setFeedback("Your turn");
       this.board.updatePlay(playData, this.canvas);
     } else if (code === ACTION_STATE) {
       let gameState = JSON.parse(payLoad.data);
       this.board.initBoard(gameState);
-      this.processPlay();
+      this.gameOver = false;
+      this.gameStarted = true;
+      setTimeout(()=> {
+        this.processPlay();
+      }, 500);
     } else if (code === ACTION_OVER) {
-      let gameState = JSON.parse(payLoad.data);
-      console.log(JSON.stringify(gameState))
+      this.processGameOver(payLoad.data);
     }  else if (code === ACTION_REGISTER) {
-      console.log('game register: ' + JSON.stringify(data.data));
     } else if (code === ACTION_INFO) {
-      console.log('game info: ' + payLoad.data.info);
     } else if (code === ACTION_CLOSED) {
-      console.log('game info: ' + payLoad.data.info);
     } else {
-      console.log('game unknown code: ' + JSON.stringify(data.data));
     }
   }
 
   mouseDown = (e) => {
     if (this.isDraggable(e.target)) {
+      PieceMoveService.clearFeedback();
       this.board.initMove();
       this.draggedElement = e.target;
       this.draggedPiece = this.board.getDraggedPiece(this.draggedElement);
@@ -185,7 +197,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     if (this.draggedElement !== undefined && this.draggedElement !== null) {
         this.initialX = this.currentX;
         this.initialY = this.currentY;
-        PieceMoveProcessor.processPieceMove(this.draggedPiece, this.board, this.canvas, e.target);
+        PieceMoveService.processPieceMove(this.draggedPiece, this.board, this.canvas, e.target);
         this.draggedElement = null;
         this.draggedPiece.element.style.zIndex = '10';
         this.draggedPiece = null;
@@ -197,7 +209,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
 
   setTranslate(xPos, yPos, element) {
     if (this.draggedElement) {
-        this.draggedPiece.element.style.transform = "translate3d(" + xPos + "px, " + yPos + "px, 0)";
+      this.draggedPiece.element.style.transform = "translate3d(" + xPos + "px, " + yPos + "px, 0)";
     }
   }
 
@@ -224,11 +236,15 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     }
   }
 
+  isCreator() {
+    let playerId = StorageService.getPlayerId();
+    return playerId === CREATOR_ID;
+  }
+
   processPlay = () => {
     let checkers = this.board.getCheckers();
-    // console.log(JSON.stringify(checkers))
     this.storage.saveGameStarted();
-    this.gameStarted = true;
+    this.storage.clearGameOver();
     this.initCanvas();
     this.initCanvasSizeAndStartPositions();
     this.canvas.innerHTML = "";
@@ -242,7 +258,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
         if (this.board.itemExists(checker.piece)) {
           let piece = checker.piece;
           let owner = piece.owner;
-          let color = (owner.id === 1) ? 'crimson' : 'black';
+          let color = (owner.id === CREATOR_ID) ? CREATOR_COLOR : JOINER_COLOR;
           let pieceElement = UtilService.getPieceElement(this.canvas, color, i, j, piece.type);
           piece.element = pieceElement;
           this.canvas.appendChild(pieceElement);
@@ -271,14 +287,6 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     this.addEventListeners();
   }
 
-  getWidthAndHeight = () => {
-    
-  }
-
-  updateView = (data) => {
-
-  }
-
   processGameCreated = (data) => {
     let content = JSON.parse(data);
     this.storage.saveGameCreated();
@@ -287,6 +295,19 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     this.storage.savePlayerId(content.playerId);
     this.buttonDisabled = false;
     this.gameCreated = true;
+  }
+
+  processGameOver(data) {
+    this.gameOver = true;
+    this.storage.saveGameOver();
+    let game = JSON.parse(data);
+    let winnerId = game.winnerId;
+    let playerId = StorageService.getPlayerId();
+    if (winnerId === playerId) {
+      PieceMoveService.setFeedback("You won!");
+    } else {
+      PieceMoveService.setFeedback("You lost!");
+    }
   }
 
   processGameJoined = (data) => {
@@ -316,6 +337,33 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   join() {
     this.buttonDisabled = true;
     this.socketService.joinGame(this.webSocket, this.joinName, this.gameCode);
+  }
+
+  leave() {
+    let confirm = window.confirm("You wont be able to access this game again. Are you sure?");
+    if (confirm) {
+      this.storage.clearGame();
+      this.buttonDisabled = false;
+      this.gameCreated = false;
+      this.gameStarted = false;
+      this.socketService.leaveGame(this.webSocket);
+    }
+  }
+
+  inTurn() {
+    return this.board.isInTurn();
+  }
+
+  restart() {
+    this.socketService.restartGame(this.webSocket);
+  }
+
+  getFeedback() {
+    return PieceMoveService.getFeedback();
+  }
+
+  cancelGame() {
+    
   }
 
   @HostListener('window:resize', ['$event'])

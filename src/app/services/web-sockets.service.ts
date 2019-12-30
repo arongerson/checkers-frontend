@@ -10,7 +10,8 @@ import {
   ACTION_RESTART, ACTION_INFO, ACTION_CLOSED
 } from '../util/constants';
 
-const HOST = '192.168.0.11:8080';
+// const HOST = '192.168.0.11:8080';
+const HOST = 'ec2-18-222-195-4.us-east-2.compute.amazonaws.com:8080';
 
 @Injectable({
   providedIn: 'root'
@@ -59,6 +60,24 @@ export class WebSocketsService {
       {
         code: ACTION_PLAY,
         data: JSON.stringify(plays)
+      }
+    ));
+  }
+
+  restartGame(webSocket) {
+    webSocket.send(JSON.stringify(
+      {
+        code: ACTION_RESTART,
+        data: ""
+      }
+    ));
+  }
+
+  leaveGame(webSocket) {
+    webSocket.send(JSON.stringify(
+      {
+        code: ACTION_LEAVE,
+        data: ""
       }
     ));
   }

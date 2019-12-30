@@ -7,7 +7,10 @@ import {
   MatCardModule,
   MatInputModule,
   MatButtonModule,
-  MatMenuModule
+  MatMenuModule,
+  MatToolbarModule,
+  MatIconModule,
+  MatDividerModule
 } from '@angular/material';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -31,6 +34,9 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     MatInputModule,
     MatButtonModule,  
     MatMenuModule,
+    MatToolbarModule,
+    MatIconModule,
+    MatDividerModule,
     BrowserAnimationsModule
   ],
   providers: [],

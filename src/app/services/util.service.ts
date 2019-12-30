@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Point } from '..//model/interface';
+import { StorageService } from './storage.service';
 
 import {
   OFFSET_X_ATTR, 
@@ -7,7 +8,11 @@ import {
   ROW_ATTRIBUTE,
   COL_ATTRIBUTE,
   PIECE_EDGE_OFFSET,
-  TYPE_KING
+  TYPE_KING,
+  ANIMATION_TIME,
+  ANIMATION_DELAY,
+  NUMBER_OF_FRAMES,
+  CREATOR_ID
 } from '../util/constants';
 import { PathLocationStrategy } from '@angular/common';
 
@@ -20,6 +25,8 @@ export class UtilService {
 
   public static getCheckerElement = (canvas, row: number, col: number) => {
     const { width, height, size, startX, startY} = canvas;
+    row = UtilService.transformValue(row);
+    col = UtilService.transformValue(col);
     let div = document.createElement('div');
     let actualWidth = ((col + 1) * canvas.size) < width ? size : width - (col * size);
     let actualHeight = ((row + 1) * size) < height ? size : height - (row * size);
@@ -35,6 +42,8 @@ export class UtilService {
 
   public static getPieceElement(canvas, color: string, row: number, col: number, type: number) {
     const { startX, startY, size } = canvas;
+    row = UtilService.transformValue(row);
+    col = UtilService.transformValue(col);
     let circle = this.getCircle(row, col, color, size);
     let svgContainer = this.getSvgContainer(size);
     let pieceDivElem = this.getPieceDivElement(startX, startY, row, col, size);
@@ -69,7 +78,8 @@ export class UtilService {
   public static getKingCircle(size) {
     let svgNS = "http://www.w3.org/2000/svg";
     let circle = document.createElementNS(svgNS, "circle");
-    let radius = (size/2) - PIECE_EDGE_OFFSET;
+    let edgeOffset = this.getPieceEdgeOffset(size);
+    let radius = (size/2) - edgeOffset;
     circle.setAttributeNS(null,"cx",`${size/2}`);
     circle.setAttributeNS(null,"cy",`${size/2}`);
     circle.setAttributeNS(null,"r", `${radius}`);
@@ -78,6 +88,10 @@ export class UtilService {
     let strokeWidth = this.getStrokeWidth(radius);
     circle.setAttributeNS(null,"stroke-width", `${strokeWidth}`);
     return circle;
+  }
+
+  public static getPieceEdgeOffset(size) {
+    return size / 9;
   }
 
   public static setKingCircle(piece) {
@@ -100,13 +114,19 @@ export class UtilService {
   public static getCircle(row, col, color,  size) {
     let svgNS = "http://www.w3.org/2000/svg";
     let circle = document.createElementNS(svgNS, "circle");
+    let edgeOffset = this.getPieceEdgeOffset(size);
+    let radius = (size/2) - edgeOffset;
     circle.setAttributeNS(null,"cx",`${size/2}`);
     circle.setAttributeNS(null,"cy",`${size/2}`);
-    circle.setAttributeNS(null,"r",`${(size/2) - PIECE_EDGE_OFFSET}`);
+    circle.setAttributeNS(null,"r",`${radius}`);
     circle.setAttributeNS(null,"filter",`url(#MyFilter)`);
     circle.setAttributeNS(null,"fill", color);
     circle.addEventListener('mouseover', this.mouseOverEffect);
     circle.addEventListener('mouseout', this.mouseOutEffect);
+    // row and col should be transformed back to true values since they are 
+    // not for display
+    row = UtilService.transformValue(row);
+    col = UtilService.transformValue(col);
     this.setCircleAttributes(circle, row, col, 0, 0);
     return circle;
   }
@@ -119,13 +139,11 @@ export class UtilService {
   }
 
   public static mouseOverEffect = (e) => {
-    e.target.setAttributeNS(null,"stroke-width","4");
-    e.target.setAttributeNS(null,"stroke","green");
+    e.target.setAttributeNS(null,"opacity","0.7");
   }
 
   public static mouseOutEffect = (e) => {
-    e.target.setAttributeNS(null,"stroke-width","0");
-    e.target.setAttributeNS(null,"stroke","green");
+    e.target.setAttributeNS(null,"opacity","1");
   }
 
   public static getBackgroundChecker(row: number, col: number, width: number, height: number, size: number) {
@@ -144,17 +162,17 @@ export class UtilService {
 
   public static positionElementOnTheBoard(piece, canvas) {
     const {startX, startY, size} = canvas;
-    piece.element.style.left = `${startX + piece.col * size}px`;
-    piece.element.style.top = `${startY + piece.row * size}px`;
+    let row = UtilService.transformValue(piece.row);
+    let col = UtilService.transformValue(piece.col);
+    piece.element.style.left = `${startX + col * size}px`;
+    piece.element.style.top = `${startY + row * size}px`;
     piece.element.style.transform = 'none';
   }
 
   public static animate(piece, from: Point, to: Point) {
     let path = this.getPath(from, to);
-    let time = 1000;
-    let n = 100;
-    for (let i = 0; i < n; i++) {
-      let waitTime = Math.floor((time/n) * i);
+    for (let i = 0; i < NUMBER_OF_FRAMES; i++) {
+      let waitTime = Math.floor((ANIMATION_TIME/NUMBER_OF_FRAMES) * i);
       setTimeout(() => {
         let point = path[i];
         piece.element.style.left = `${point.x}px`;
@@ -165,10 +183,9 @@ export class UtilService {
 
   public static getPath(from: Point, to: Point) {
     let m = this.getSlope(from, to);
-    let n = 100;
-    let increment = this.getXIncrement(from, to, n);
+    let increment = this.getXIncrement(from, to);
     let path: Point[] = [];
-    for (let i = 0; i < n; i++) {
+    for (let i = 1; i <= NUMBER_OF_FRAMES; i++) {
       let x = from.x + i*increment;
       let y = m*(i*increment) + from.y;
       path.push({x: x, y: y});
@@ -180,8 +197,8 @@ export class UtilService {
     return (to.y - from.y)/(to.x - from.x);
   }
 
-  private static getXIncrement(from: Point, to: Point, n: number) {
-    return (to.x - from.x) / n;
+  private static getXIncrement(from: Point, to: Point) {
+    return (to.x - from.x) / NUMBER_OF_FRAMES;
   }
 
   public static getElementPoint(element) {
@@ -190,5 +207,16 @@ export class UtilService {
       x: rect.left,
       y: rect.top
     };
+  }
+
+  // the board has to be rotated 180 degrees for the creator
+  // the rows and cols are transformed for anything that has to be shown on the screen 
+  private static transformValue(value) {
+    let playerId = StorageService.getPlayerId();
+    let boardSize = 8;
+    if (playerId === CREATOR_ID) {
+      return boardSize - value - 1;
+    }
+    return value;
   }
 }

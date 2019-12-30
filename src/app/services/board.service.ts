@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 
 import { StorageService } from './storage.service';
 import { UtilService } from './util.service'; 
+import { SoundService } from './sound.service';
 import { CREATOR_ID, JOINER_ID } from '../util/constants';
 import { Play, Point} from '../model/interface';
 
@@ -12,7 +13,9 @@ import {
   COL_ATTRIBUTE,
   PIECE_EDGE_OFFSET,
   TYPE_KING,
-  TYPE_NORMAL
+  TYPE_NORMAL,
+  ANIMATION_TIME,
+  ANIMATION_DELAY
 } from '../util/constants';
 import { $$ } from 'protractor';
 import { runInThisContext } from 'vm';
@@ -40,7 +43,7 @@ export class BoardService {
   private row: number;
   private col: number;
 
-  constructor(private storage: StorageService) {
+  constructor(private sound: SoundService) {
   }
 
   /**
@@ -50,7 +53,7 @@ export class BoardService {
   public initBoard(gameState) {
     this.checkers = gameState.checkers;
     this.playerInTurn = gameState.turn;
-    this.playerId = this.storage.getPlayerId();
+    this.playerId = StorageService.getPlayerId();
     this.setRowAndColToPieces();
     if (this.isPlayerInTurn()) {
       this.initTurn();
@@ -73,7 +76,8 @@ export class BoardService {
   public updatePlay(data, canvas) {
     let playsText = data.plays;
     let plays = JSON.parse(playsText);
-    let animTime = 1000;
+    let animTime = ANIMATION_TIME;
+    let n = plays.length;
     for (let i = 0; i < plays.length; i++) {
       let play = plays[i];
       let from = play.from;
@@ -89,25 +93,35 @@ export class BoardService {
       let fromPoint = UtilService.getElementPoint(fromChecker.element);
       let toPoint = UtilService.getElementPoint(toChecker.element);
       setTimeout(() => {
+        this.sound.playSwoop();
         UtilService.animate(piece, fromPoint, toPoint);
         UtilService.positionElementOnTheBoard(piece, canvas);
         let circle = piece.element.firstChild.firstChild;
         UtilService.setCircleAttributes(circle, to.row, to.col, 0, 0);
         this.removeCapturedPiece(play.captured);
-      }, i*1000);
+      }, i*ANIMATION_TIME + (i + 1) * ANIMATION_DELAY);
 
     }
-    this.updateTypeIfKing(plays);
-    this.playerInTurn = -this.playerInTurn;
-    this.initTurn();
+    setTimeout(() => {
+      this.updateTypeIfKing(plays);
+      this.playerInTurn = -this.playerInTurn;
+      this.initTurn();
+    }, n*ANIMATION_TIME + (n + 1) * ANIMATION_DELAY);
   }
 
   private removeCapturedPiece(captured) {
     if (captured !== null) {
-      let cPiece = this.checkers[captured.row][captured.col].piece;
-      this.checkers[captured.row][captured.col].piece = null;
-      cPiece.element.parentNode.removeChild(cPiece.element);
+      setTimeout(() => {
+        this.sound.playCapture();
+        let cPiece = this.checkers[captured.row][captured.col].piece;
+        this.checkers[captured.row][captured.col].piece = null;
+        cPiece.element.parentNode.removeChild(cPiece.element);
+      }, 500);
     }
+  }
+
+  public getNumberToBeCaptured() {
+    return this.numberOfPiecesToBeCaptured;
   }
 
   updateTypeIfKing(plays) {
@@ -131,7 +145,6 @@ export class BoardService {
     this.plays = [];
     this.playCompleted = false;
     this.calculateMaxNumberOfPiecesToBeCaptured();
-    console.log("to be captured: " + this.numberOfPiecesToBeCaptured);
   }
 
   /**
@@ -163,6 +176,10 @@ export class BoardService {
 
   public getChecker(row, col) {
     return this.checkers[row][col];
+  }
+
+  public isInTurn() {
+    return this.playerId === this.playerInTurn;
   }
 
   public hasCapturedAll() {
@@ -610,7 +627,6 @@ export class BoardService {
    */
   private getKingMaxPossibleCaptures(emptyCheckers: any[]) {
     let max = 0;
-    console.log(emptyCheckers);
     for (let emptyChecker of emptyCheckers) {
       const { row, column } = emptyChecker;
       let leftForwardChecker = this.getNextOccupiedChecker(row, column, this.getLeftForwardChecker);
@@ -676,7 +692,6 @@ export class BoardService {
     let checker;
     while ((checker = nextCheckerMethod(row, col)) != null) {
       if (this.itemExists(checker.piece)) {
-        // console.log(checker.row, checker.column);
         return checker;
       }
       row = checker.row;
@@ -723,7 +738,6 @@ export class BoardService {
       leftBackwardCount = this.getOrdinaryPieceMaxPossibleCapturesAux(piece, leftBackwardChecker, this.getLeftBackwardChecker);
     }
     if (this.isRightBackwardCapturable(rightBackwardChecker)) {
-      console.log('right-back')
       rightBackwardCount = this.getOrdinaryPieceMaxPossibleCapturesAux(piece, rightBackwardChecker, this.getRightBackwardChecker);
     }
     return this.maxOfFour(leftForwardCount, rightForwardCount, leftBackwardCount, rightBackwardCount);

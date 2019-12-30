@@ -5,6 +5,7 @@ const PLAYER_ID_KEY = "id";
 const GAME_CREATED_KEY = "created";
 const GAME_STARTED_KEY = "started";
 const GAME_CODE_KEY = "gameCode";
+const GAME_OVER_KEY = "over";
 
 @Injectable({
   providedIn: 'root'
@@ -26,7 +27,7 @@ export class StorageService {
     sessionStorage.setItem(PLAYER_ID_KEY, id.toString());
   }
 
-  getPlayerId(): number {
+  static getPlayerId(): number {
     return parseInt(sessionStorage.getItem(PLAYER_ID_KEY));
   }
 
@@ -43,6 +44,10 @@ export class StorageService {
     sessionStorage.removeItem(GAME_CREATED_KEY);
   }
 
+  clearGameOver() {
+    sessionStorage.removeItem(GAME_OVER_KEY);
+  }
+
   saveGameCreated() {
     sessionStorage.setItem(GAME_CREATED_KEY, "created");
   }
@@ -50,6 +55,11 @@ export class StorageService {
   saveGameStarted() {
     sessionStorage.setItem(GAME_STARTED_KEY, "started");
   }
+
+  saveGameOver() {
+    sessionStorage.setItem(GAME_OVER_KEY, "over");
+  }
+
 
   initGameCreated() {
     return sessionStorage.getItem(GAME_CREATED_KEY) !== null;
@@ -59,6 +69,10 @@ export class StorageService {
     return sessionStorage.getItem(GAME_STARTED_KEY) !== null;
   }
 
+  initGameOver() {
+    return sessionStorage.getItem(GAME_OVER_KEY) !== null;
+  }
+
   saveGameCode(gameCode) {
     sessionStorage.setItem(GAME_CODE_KEY, gameCode);
   }
@@ -66,5 +80,9 @@ export class StorageService {
   getGameCode() {
     let code = sessionStorage.getItem(GAME_CODE_KEY);
     return code;
+  }
+
+  clearGame() {
+    sessionStorage.clear();
   }
 }
