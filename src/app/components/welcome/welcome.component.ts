@@ -27,7 +27,6 @@ import {
 })
 export class WelcomeComponent implements OnInit, AfterViewInit {
 
-  webSocket: any;
   joinName: string;
   gameCode: string;
   playerName: string;
@@ -42,7 +41,6 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   yourColor: string;
   creatorColorClass: string = 'creator-color';
 
-  // playData = null;
   canvas: any;
 
   initialX = 0;
@@ -71,7 +69,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     this.generatedCode = this.storage.getGameCode();
     this.gameOver = this.storage.initGameOver();
     this.listenersAdded = false;
-    this.connect();
+    this.socketService.welcomeHooks(this.onMessage);
   }
 
   ngAfterViewInit() {
@@ -99,19 +97,6 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
         element.appendChild(backgroundChecker);
       }
     }
-  }
-
-  connect() {
-    this.webSocket = this.socketService.initWebSocket();
-    if (this.webSocket) {
-      this.webSocket.onopen = this.onOpen;
-      this.webSocket.onmessage = this.onMessage;
-      this.webSocket.onerror = this.onError;
-      this.webSocket.onclose = this.onClose;
-    }
-  }
-
-  onOpen = (data) => {
   }
 
   onMessage = (data) => {
@@ -202,7 +187,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
         this.draggedPiece.element.style.zIndex = '10';
         this.draggedPiece = null;
         if (this.board.getPlayCompleted()) {
-          this.socketService.sendPlayUpdate(this.webSocket, this.board.getPlays());
+          this.socketService.sendPlayUpdate(this.board.getPlays());
         }
     }
   } 
@@ -321,22 +306,14 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
 
   }
 
-  onError = (e) => {
-    console.log('error');
-  }
-
-  onClose = () => {
-    console.log('closed connection');
-  }
-
   create() {
     this.buttonDisabled = true;
-    this.socketService.createGame(this.webSocket, this.playerName);
+    this.socketService.createGame(this.playerName);
   }
 
   join() {
     this.buttonDisabled = true;
-    this.socketService.joinGame(this.webSocket, this.joinName, this.gameCode);
+    this.socketService.joinGame(this.joinName, this.gameCode);
   }
 
   leave() {
@@ -346,7 +323,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
       this.buttonDisabled = false;
       this.gameCreated = false;
       this.gameStarted = false;
-      this.socketService.leaveGame(this.webSocket);
+      this.socketService.leaveGame();
     }
   }
 
@@ -355,7 +332,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   }
 
   restart() {
-    this.socketService.restartGame(this.webSocket);
+    this.socketService.restartGame();
   }
 
   getFeedback() {
@@ -363,7 +340,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   }
 
   cancelGame() {
-    
+
   }
 
   @HostListener('window:resize', ['$event'])
@@ -376,5 +353,4 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
       this.processPlay();
     }
   }
-
 }

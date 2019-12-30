@@ -19,8 +19,20 @@ const HOST = 'ec2-18-222-195-4.us-east-2.compute.amazonaws.com:8080';
 export class WebSocketsService {
 
   token: string;
+  webSocket: any;
 
   constructor(private storage: StorageService) { 
+    this.connect();
+  }
+
+  connect() {
+    this.webSocket = this.initWebSocket();
+    if (this.webSocket) {
+      this.webSocket.onopen = this.onOpen;
+      // this.webSocket.onmessage = this.onMessage;
+      this.webSocket.onerror = this.onError;
+      this.webSocket.onclose = this.onClose;
+    }
   }
 
   initWebSocket() {
@@ -31,8 +43,23 @@ export class WebSocketsService {
     throwError('web sockets not supported');
   }
 
-  createGame(webSocket, playerName: string) {
-    webSocket.send(JSON.stringify(
+  onOpen = (data) => {
+  }
+
+  onError = (e) => {
+    console.log('error');
+  }
+
+  onClose = () => {
+    console.log('closed connection');
+  }
+
+  welcomeHooks(onMessage: Function) {
+    this.webSocket.onmessage = onMessage;
+  }
+
+  createGame(playerName: string) {
+    this.webSocket.send(JSON.stringify(
       {
         code: ACTION_CREATE,
         data: playerName
@@ -40,8 +67,8 @@ export class WebSocketsService {
     ));
   }
 
-  joinGame(webSocket, playerName: string, gameCode: string) {
-    webSocket.send(JSON.stringify(
+  joinGame(playerName: string, gameCode: string) {
+   this. webSocket.send(JSON.stringify(
       {
         code: ACTION_JOIN,
         data: JSON.stringify(
@@ -54,9 +81,8 @@ export class WebSocketsService {
     ));
   }
 
-  sendPlayUpdate(webSocket, plays: Play[]) {
-    console.log(JSON.stringify(plays));
-    webSocket.send(JSON.stringify(
+  sendPlayUpdate(plays: Play[]) {
+    this.webSocket.send(JSON.stringify(
       {
         code: ACTION_PLAY,
         data: JSON.stringify(plays)
@@ -64,8 +90,8 @@ export class WebSocketsService {
     ));
   }
 
-  restartGame(webSocket) {
-    webSocket.send(JSON.stringify(
+  restartGame() {
+    this.webSocket.send(JSON.stringify(
       {
         code: ACTION_RESTART,
         data: ""
@@ -73,8 +99,8 @@ export class WebSocketsService {
     ));
   }
 
-  leaveGame(webSocket) {
-    webSocket.send(JSON.stringify(
+  leaveGame() {
+    this.webSocket.send(JSON.stringify(
       {
         code: ACTION_LEAVE,
         data: ""
