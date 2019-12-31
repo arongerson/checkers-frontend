@@ -179,6 +179,13 @@ export class PlayComponent implements OnInit {
     }
   }
 
+  getOpponentName() {
+    if (this.isCreator()) {
+      return this.joinerName;
+    }
+    return this.creatorName;
+  }
+
   @HostListener('window:resize', ['$event'])
   onResize(event) {
     let checkers = this.board.getCheckers();

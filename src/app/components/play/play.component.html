@@ -53,7 +53,7 @@
                 aria-label="">
                   person
               </mat-icon>
-              <span>Oppo</span>
+              <span>{{getOpponentName()}}</span>
               <mat-icon 
                 class="icon" 
                 [ngClass]="{'creator-color': !isCreator(), 'joiner-color': isCreator()}" 
