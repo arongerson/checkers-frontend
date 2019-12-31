@@ -1,7 +1,4 @@
 import { Injectable } from '@angular/core';
-import { PieceMoveService } from '../model/pieceMoveProcessor';
-import { BoardService } from './board.service';
-import { WebSocketsService } from './web-sockets.service';
 
 import {
   OFFSET_X_ATTR, 
@@ -13,33 +10,76 @@ import {
 @Injectable({
   providedIn: 'root'
 })
-export class DragEventService {
+export class CanvasService {
 
-  initialX = 0;
-  initialY = 0;
-  currentX = 0;
-  currentY = 0;
-  offsetX = 0;
-  offsetY = 0;
+  initialX: number = 0;
+  initialY: number = 0;
+  currentX: number = 0;
+  currentY: number = 0;
+  offsetX: number = 0;
+  offsetY: number = 0;
+  listenersAdded: boolean = false;
   draggedElement: any;
   draggedPiece: any;
+  
   canvas: any;
 
-  constructor(
-    private board: BoardService,
-    private socket: WebSocketsService
-  ) { }
+  isPieceMovable: Function;
+  dragStart: Function;
+  dragCompleted: Function;
 
-  init(canvas: any) {
+  constructor() { }
+
+  init(canvas: any, isPieceMovable, dragStart: Function, dragCompleted: Function) {
     this.canvas = canvas;
+    this.isPieceMovable = isPieceMovable;
+    this.dragStart = dragStart;
+    this.dragCompleted = dragCompleted;
+    this.addEventListeners();
+  }
+
+  private initCanvasSizeAndStartPositions = () => {
+    this.canvas.startX = 0;
+    this.canvas.startY = 0;
+    if (this.canvas.width < this.canvas.height) {
+      this.canvas.startY = (this.canvas.height - this.canvas.width) / 2;
+      this.canvas.size = this.canvas.width / 8;
+    } else {
+      this.canvas.startX = (this.canvas.width - this.canvas.height) / 2;
+      this.canvas.size = this.canvas.height/ 8;
+    }
+  }
+
+  private initCanvas = () => {
+    let rect = this.canvas.getBoundingClientRect();
+    this.canvas.width = rect.width;
+    this.canvas.height = rect.height;
+    this.addEventListeners();
+  }
+
+  updateCanvas() {
+    this.initCanvas();
+    this.initCanvasSizeAndStartPositions();
+  }
+
+  addEventListeners() {
+    if (!this.listenersAdded) {
+      // mouse listeners
+      this.canvas.addEventListener('mousedown', this.mouseDown, false);
+      this.canvas.addEventListener('mousemove', this.mouseMove, false);
+      this.canvas.addEventListener('mouseup', this.mouseUp, false);
+      // touch listeners
+      this.canvas.addEventListener('touchstart', this.mouseDown, false);
+      this.canvas.addEventListener('touchmove', this.mouseMove, false);
+      this.canvas.addEventListener('touchend', this.mouseUp, false);
+      this.listenersAdded = true;
+    }
   }
 
   mouseDown = (e) => {
     if (this.isDraggable(e.target)) {
-      PieceMoveService.clearFeedback();
-      this.board.initMove();
+      this.draggedPiece = this.dragStart(e.target);
       this.draggedElement = e.target;
-      this.draggedPiece = this.board.getDraggedPiece(this.draggedElement);
       this.draggedPiece.element.style.zIndex = '20';
       if (e.type === "touchstart") {
         this.initialX = e.touches[0].clientX - parseFloat(this.draggedElement.getAttribute(OFFSET_X_ATTR));
@@ -71,15 +111,12 @@ export class DragEventService {
 
   mouseUp = (e) => {
     if (this.draggedElement !== undefined && this.draggedElement !== null) {
+        this.dragCompleted(this.draggedPiece);
         this.initialX = this.currentX;
         this.initialY = this.currentY;
-        PieceMoveService.processPieceMove(this.draggedPiece, this.board, this.canvas, e.target);
         this.draggedElement = null;
         this.draggedPiece.element.style.zIndex = '10';
         this.draggedPiece = null;
-        if (this.board.getPlayCompleted()) {
-          this.socket.sendPlayUpdate(this.board.getPlays());
-        }
     }
   } 
 
@@ -90,7 +127,7 @@ export class DragEventService {
   }
 
   isDraggable(element) {
-    return this.isPiece(element) && this.board.isPieceMovable(element);
+    return this.isPiece(element) && this.isPieceMovable(element);
   }
 
   isPiece(element) {

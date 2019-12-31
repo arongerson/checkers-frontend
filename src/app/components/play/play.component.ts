@@ -1,10 +1,11 @@
 import { Component, OnInit, HostListener } from '@angular/core';
+import { Router } from '@angular/router';
 import { StorageService } from '../../services/storage.service';
 import { BoardService } from '../../services/board.service';
 import { UtilService } from '../../services/util.service';
 import { WebSocketsService } from '../../services/web-sockets.service';
 import { PieceMoveService } from '../../model/pieceMoveProcessor';
-import { DragEventService } from '../../services/drag-event.service';
+import { CanvasService } from '../../services/canvas.service';
 import {
   ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
   ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
@@ -29,12 +30,17 @@ export class PlayComponent implements OnInit {
     private storage: StorageService,
     private board: BoardService,
     private socket: WebSocketsService,
-    private drag: DragEventService
+    private canvasService: CanvasService,
+    private router: Router
   ) { }
 
   ngOnInit() {
     this.canvas = document.getElementById('canvas');
-    this.drag.init(this.canvas);
+    this.canvasService.init(
+      this.canvas, 
+      this.isPieceMovableCallback,
+      this.dragStartCallback, 
+      this.dragCompletedCallback);
     this.socket.onMessage(this.onMessage);
     this.socket.getGameState();
   }
@@ -88,8 +94,7 @@ export class PlayComponent implements OnInit {
     let checkers = this.board.getCheckers();
     this.storage.saveGameStarted();
     this.storage.clearGameOver();
-    this.initCanvas();
-    this.initCanvasSizeAndStartPositions();
+    this.canvasService.updateCanvas();
     this.canvas.innerHTML = "";
     for(let i = 0; i < checkers.length; i++) {
       let rowCheckers = checkers[i];
@@ -123,39 +128,6 @@ export class PlayComponent implements OnInit {
     }
   }
 
-  initCanvasSizeAndStartPositions = () => {
-    this.canvas.startX = 0;
-    this.canvas.startY = 0;
-    if (this.canvas.width < this.canvas.height) {
-      this.canvas.startY = (this.canvas.height - this.canvas.width) / 2;
-      this.canvas.size = this.canvas.width / 8;
-    } else {
-      this.canvas.startX = (this.canvas.width - this.canvas.height) / 2;
-      this.canvas.size = this.canvas.height/8;
-    }
-  }
-
-  initCanvas = () => {
-    let rect = this.canvas.getBoundingClientRect();
-    this.canvas.width = rect.width;
-    this.canvas.height = rect.height;
-    this.addEventListeners();
-  }
-
-  addEventListeners() {
-    if (!this.listenersAdded) {
-      // mouse listeners
-      this.canvas.addEventListener('mousedown', this.drag.mouseDown, false);
-      this.canvas.addEventListener('mousemove', this.drag.mouseMove, false);
-      this.canvas.addEventListener('mouseup', this.drag.mouseUp, false);
-      // touch listeners
-      this.canvas.addEventListener('touchstart', this.drag.mouseDown, false);
-      this.canvas.addEventListener('touchmove', this.drag.mouseMove, false);
-      this.canvas.addEventListener('touchend', this.drag.mouseUp, false);
-      this.listenersAdded = true;
-    }
-  }
-
   isCreator() {
     let playerId = StorageService.getPlayerId();
     return playerId === CREATOR_ID;
@@ -179,6 +151,24 @@ export class PlayComponent implements OnInit {
 
   restart() {
     this.socket.restartGame();
+  }
+
+  isPieceMovableCallback = (element) => {
+    return this.board.isPieceMovable(element)
+  }
+
+  dragStartCallback = (target) => {
+    PieceMoveService.clearFeedback();
+    this.board.initMove();
+    return this.board.getDraggedPiece(target);
+  }
+
+  dragCompletedCallback = (draggedPiece) => {
+    let target = draggedPiece.element.firstChild.firstChild;
+    PieceMoveService.processPieceMove(draggedPiece, this.board, this.canvas, target);
+    if (this.board.getPlayCompleted()) {
+      this.socket.sendPlayUpdate(this.board.getPlays());
+    }
   }
 
   @HostListener('window:resize', ['$event'])
