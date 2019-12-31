@@ -1,0 +1,106 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.title {
+    padding: 0 1rem;
+    background-color:#333;
+    color: white;
+}
+
+.body {
+    display: flex;
+    position: relative;
+    background-color: #000;
+    flex: 1 1 auto;
+    height: 100%;
+}
+
+#board {
+    flex: 1 1 auto;
+    margin-left: 1rem;
+    position: relative;
+}
+
+.controls {
+    max-width: 25rem;
+    min-width: 15rem;
+    margin: 0 1rem;
+    z-index: 100;
+}
+
+.controls>div:first-child {
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+}
+
+.form {
+    /* min-width: 150px;
+    max-width: 500px; */
+    width: 100%;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.play-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.creator-color {
+    color: black;
+}
+
+.joiner-color {
+    color: #00b0ff;
+}
+
+.turn-color {
+    color: tomato;
+}
+
+.no-turn-color {
+    color: #666;
+}
+
+#canvas {
+    position: relative;
+    background-color: black;
+    flex: 1 1 auto;
+}
+
+#play-controls {
+    background-color: #333;
+}
+
+.menu {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+}
+
+.piece-highlight {
+    fill: black;
+    opacity: 1;
+}
+
+.icon {
+    padding: 0 14px;
+    cursor: pointer;
+}
+
+.spacer {
+    flex: 1 1 auto;
+}
+
+.svg {
+    width: 0;
+    height: 0;
+    padding: 0;
+    margin: 0;
+    display: block
+}

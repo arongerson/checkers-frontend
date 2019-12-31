@@ -12,6 +12,8 @@ const GAME_OVER_KEY = "over";
 })
 export class StorageService {
 
+  gameState: any;
+
   constructor() { }
 
   getToken() {

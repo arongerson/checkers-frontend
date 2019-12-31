@@ -7,11 +7,12 @@ import { StorageService } from './storage.service';
 import {
   ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
   ACTION_LEAVE, ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
-  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED
+  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STATE
 } from '../util/constants';
+import { on } from 'cluster';
 
-// const HOST = '192.168.0.11:8080';
-const HOST = 'ec2-18-222-195-4.us-east-2.compute.amazonaws.com:8080';
+const HOST = '192.168.0.11:8080';
+// const HOST = 'ec2-18-222-195-4.us-east-2.compute.amazonaws.com:8080';
 
 @Injectable({
   providedIn: 'root'
@@ -20,6 +21,7 @@ export class WebSocketsService {
 
   token: string;
   webSocket: any;
+  onMessageCallback: Function;
 
   constructor(private storage: StorageService) { 
     this.connect();
@@ -29,9 +31,11 @@ export class WebSocketsService {
     this.webSocket = this.initWebSocket();
     if (this.webSocket) {
       this.webSocket.onopen = this.onOpen;
-      // this.webSocket.onmessage = this.onMessage;
       this.webSocket.onerror = this.onError;
       this.webSocket.onclose = this.onClose;
+      if (this.onMessageCallback) {
+        this.webSocket.onMessage = this.onMessageCallback;
+      }
     }
   }
 
@@ -44,6 +48,8 @@ export class WebSocketsService {
   }
 
   onOpen = (data) => {
+    console.log('web-socket is open');
+    this.getGameState();
   }
 
   onError = (e) => {
@@ -52,10 +58,14 @@ export class WebSocketsService {
 
   onClose = () => {
     console.log('closed connection');
+    this.connect();
   }
 
-  welcomeHooks(onMessage: Function) {
-    this.webSocket.onmessage = onMessage;
+  onMessage(onMessageCallback: Function) {
+    this.onMessageCallback = onMessageCallback;
+    if (this.webSocket) {
+      this.webSocket.onmessage = onMessageCallback;
+    }
   }
 
   createGame(playerName: string) {
@@ -106,5 +116,17 @@ export class WebSocketsService {
         data: ""
       }
     ));
+  }
+
+  getGameState() {
+    if (this.webSocket.readyState === WebSocket.OPEN) {
+      console.log('getting the data');
+      this.webSocket.send(JSON.stringify(
+        {
+          code: ACTION_STATE,
+          data: ""
+        }
+      ));
+    }
   }
 }
