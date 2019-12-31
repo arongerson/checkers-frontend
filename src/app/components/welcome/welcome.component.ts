@@ -1,16 +1,16 @@
 import { Component, OnInit, AfterViewInit, HostListener } from '@angular/core';
+import { FormGroup, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { WebSocketsService } from '../../services/web-sockets.service';
-import { BoardService } from '../../services/board.service';
 import { UtilService } from '../../services/util.service';
 import { StorageService } from '../../services/storage.service';
-import { PieceMoveService } from '../../model/pieceMoveProcessor';
+import { ValidationService } from '../../services/validation.service';
 
 import {
   ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
   ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
   ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_OTHER_CLOSED, ACTION_STATE, ACTION_OVER, CREATOR_ID,
-  CREATOR_COLOR, JOINER_COLOR
+  CREATOR_COLOR, JOINER_COLOR, ACTION_OTHER_JOINED
 } from '../../util/constants';
 
 @Component({
@@ -20,11 +20,7 @@ import {
 })
 export class WelcomeComponent implements OnInit, AfterViewInit {
 
-  joinName: string;
-  gameCode: string;
-  playerName: string;
-
-  buttonDisabled = false;
+  submitted = false;
   gameCreated = false;
   generatedCode: string;
   listenersAdded = false;
@@ -33,15 +29,26 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
 
   canvas: any;
 
+  createForm = new FormGroup({
+    name: new FormControl('', this.validation.getNameValidators()),
+    boardSize: new FormControl('8')
+  });
+
+  joinForm = new FormGroup({
+    name: new FormControl('', this.validation.getNameValidators()),
+    code: new FormControl('', this.validation.getCodeValidators())
+  });
+
   constructor(
     private socketService: WebSocketsService,
-    private board: BoardService,
     private storage: StorageService,
+    private validation: ValidationService,
     private router: Router
   ) {}
 
   ngOnInit() {
     this.init();
+    this.socketService.connect();
     this.socketService.onMessage(this.onMessage);
   }
 
@@ -53,6 +60,10 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.drawCheckers();
+  }
+
+  getErrorMessage(control) {
+    return this.validation.getErrorMessage(control);
   }
 
   drawCheckers() {
@@ -77,6 +88,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   }
 
   onMessage = (data) => {
+    console.log('on-message: ' + data.data);
     let payLoad = JSON.parse(data.data);
     let code = parseInt(payLoad.code);
     if (code === ACTION_CREATE) {
@@ -87,7 +99,8 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     } else if (code === ACTION_CONNECT) {
       this.storage.saveToken(payLoad.data);
     } else if (code === ACTION_ERROR) {
-    } else if (code === ACTION_LOGIN) {
+    } else if (code === ACTION_OTHER_JOINED) {
+      this.processOtherJoined(payLoad.data);
     } else if (code === ACTION_OTHER_CONNECT) {
     } else if (code === ACTION_REGISTER) {
     } else if (code === ACTION_INFO) {
@@ -107,14 +120,19 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     this.generatedCode = content.gameCode;
     this.storage.saveGameCode(this.generatedCode);
     this.storage.savePlayerId(content.playerId);
-    this.buttonDisabled = false;
+    this.submitted = false;
     this.gameCreated = true;
   }
 
   processGameJoined = (data) => {
     let content = JSON.parse(data);
     this.storage.savePlayerId(content.playerId);
-    this.buttonDisabled = false;
+    this.submitted = false;
+    this.router.navigate(['play']);
+  }
+
+  processOtherJoined = (data) => {
+    this.router.navigate(['play']);
   }
 
   deleteGame() {
@@ -122,13 +140,17 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   }
 
   create() {
-    this.buttonDisabled = true;
-    this.socketService.createGame(this.playerName);
+    this.submitted = true;
+    let playerName = this.createForm.controls.name.value;
+    let boardSize = this.createForm.controls.boardSize.value;
+    this.socketService.createGame(playerName, boardSize);
   }
 
   join() {
-    this.buttonDisabled = true;
-    this.socketService.joinGame(this.joinName, this.gameCode);
+    this.submitted = true;
+    let joinerName = this.joinForm.controls.name.value;
+    let gameCode = this.joinForm.controls.code.value;
+    this.socketService.joinGame(joinerName, gameCode);
   }
 
   cancelGame() {

@@ -38,15 +38,15 @@ export class CanvasService {
     this.addEventListeners();
   }
 
-  private initCanvasSizeAndStartPositions = () => {
+  private initCanvasSizeAndStartPositions = (boardSize) => {
     this.canvas.startX = 0;
     this.canvas.startY = 0;
     if (this.canvas.width < this.canvas.height) {
       this.canvas.startY = (this.canvas.height - this.canvas.width) / 2;
-      this.canvas.size = this.canvas.width / 8;
+      this.canvas.size = this.canvas.width / boardSize;
     } else {
       this.canvas.startX = (this.canvas.width - this.canvas.height) / 2;
-      this.canvas.size = this.canvas.height/ 8;
+      this.canvas.size = this.canvas.height/ boardSize;
     }
   }
 
@@ -57,9 +57,9 @@ export class CanvasService {
     this.addEventListeners();
   }
 
-  updateCanvas() {
+  updateCanvas(boardSize) {
     this.initCanvas();
-    this.initCanvasSizeAndStartPositions();
+    this.initCanvasSizeAndStartPositions(boardSize);
   }
 
   addEventListeners() {

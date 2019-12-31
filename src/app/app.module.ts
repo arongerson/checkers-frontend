@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 import { LayoutModule } from '@angular/cdk/layout';
 
@@ -10,7 +10,8 @@ import {
   MatMenuModule,
   MatToolbarModule,
   MatIconModule,
-  MatDividerModule
+  MatDividerModule,
+  MatRadioModule
 } from '@angular/material';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -30,6 +31,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     AppRoutingModule,
     LayoutModule,
     FormsModule,
+    ReactiveFormsModule,
     MatCardModule,
     MatInputModule,
     MatButtonModule,  
@@ -37,6 +39,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     MatToolbarModule,
     MatIconModule,
     MatDividerModule,
+    MatRadioModule,
     BrowserAnimationsModule
   ],
   providers: [],

@@ -24,7 +24,9 @@ export class PlayComponent implements OnInit {
   gameStarted = true;
   gameTerminated = false;
   canvas: any;
-  listenersAdded = false;
+  creatorName: string;
+  joinerName: string;
+  gameState: string;
 
   constructor(
     private storage: StorageService,
@@ -75,6 +77,7 @@ export class PlayComponent implements OnInit {
     this.gameTerminated = true;
     this.gameOver = false;
     this.storage.clearGame();
+    this.router.navigate(['/']);
   }
 
   processOtherClosed() {
@@ -85,6 +88,9 @@ export class PlayComponent implements OnInit {
   onState(data) {
     let gameState = JSON.parse(data);
     this.board.initBoard(gameState);
+    this.creatorName = gameState.creator;
+    this.joinerName = gameState.joiner;
+    this.gameState = gameState.status; // misnomer
     this.gameOver = false;
     this.gameStarted = true;
     this.processGameState();
@@ -92,22 +98,24 @@ export class PlayComponent implements OnInit {
 
   processGameState = () => {
     let checkers = this.board.getCheckers();
+    let boardSize = this.board.getBoardSize();
     this.storage.saveGameStarted();
     this.storage.clearGameOver();
-    this.canvasService.updateCanvas();
+    this.canvasService.updateCanvas(boardSize);
     this.canvas.innerHTML = "";
     for(let i = 0; i < checkers.length; i++) {
       let rowCheckers = checkers[i];
       for (let j = 0; j < rowCheckers.length; j++) {
         let checker = rowCheckers[j];
-        let checkerElement = UtilService.getCheckerElement(this.canvas, i, j);
+        let checkerElement = UtilService.getCheckerElement(this.canvas, i, j, boardSize);
         checker.element = checkerElement;
         this.canvas.appendChild(checkerElement);
         if (this.board.itemExists(checker.piece)) {
           let piece = checker.piece;
           let owner = piece.owner;
           let color = (owner.id === CREATOR_ID) ? CREATOR_COLOR : JOINER_COLOR;
-          let pieceElement = UtilService.getPieceElement(this.canvas, color, i, j, piece.type);
+          let pieceElement = 
+            UtilService.getPieceElement(this.canvas, color, i, j, piece.type, boardSize);
           piece.element = pieceElement;
           this.canvas.appendChild(pieceElement);
         }

@@ -15,22 +15,24 @@ export class PieceMoveService {
 
     public static processPieceMove(draggedPiece, board, canvas, target) {
         let checker = board.getLandingChecker(draggedPiece.element, canvas.size);
+        let boardSize = board.getBoardSize();
         if (checker !== null && board.notSameChecker(checker, target)) {
           this.validatePieceMove(draggedPiece, board, canvas, checker);
         } else {
           this.feedback = `wrong move`;
           let prevChecker = board.getChecker(draggedPiece.row, draggedPiece.col);
-          this.snapPiece(draggedPiece, prevChecker, canvas);
+          this.snapPiece(draggedPiece, prevChecker, canvas, boardSize);
         }
     }
 
     private static validatePieceMove(draggedPiece, board, canvas, checker) {
+        let boardSize = board.getBoardSize();
         if (board.isValidMove(draggedPiece, checker)) {
           this.checkMoveType(draggedPiece, board, canvas, checker);
         } else {
           this.feedback = `wrong move`;
           let prevChecker = board.getChecker(draggedPiece.row, draggedPiece.col);
-          this.snapPiece(draggedPiece, prevChecker, canvas);
+          this.snapPiece(draggedPiece, prevChecker, canvas, boardSize);
         }
     }
     
@@ -45,6 +47,7 @@ export class PieceMoveService {
     private static processNormalMove(draggedPiece, board: BoardService, canvas, checker) {
       let prevPieceRow = draggedPiece.row;
       let prevPieceCol = draggedPiece.col;
+      let boardSize = board.getBoardSize();
       board.updatePlayingPieceAfterMove(draggedPiece, checker);
       board.saveMovePlay([prevPieceRow, prevPieceCol], [checker.row, checker.column]);
       if (!board.hasCapturedAll()) {
@@ -53,7 +56,7 @@ export class PieceMoveService {
         board.initTurn();
       } else {
         this.feedback = "turn completed";
-        this.snapPiece(draggedPiece, checker, canvas);
+        this.snapPiece(draggedPiece, checker, canvas, boardSize);
         board.finalizePieceMove(draggedPiece);
       }
     }
@@ -61,11 +64,12 @@ export class PieceMoveService {
     private static processPieceCaptured(draggedPiece, board: BoardService, canvas, checker) {
       let prevPieceRow = draggedPiece.row;
       let prevPieceCol = draggedPiece.col;
+      let boardSize = board.getBoardSize();
       board.updatePlayingPieceAfterMove(draggedPiece, checker);
       board.saveCapturePlay([prevPieceRow, prevPieceCol], [checker.row, checker.column]);
       if (board.canCaptureMore(draggedPiece)) {
         board.setDraggedPiece(draggedPiece);
-        this.snapPiece(draggedPiece, checker, canvas);
+        this.snapPiece(draggedPiece, checker, canvas, boardSize);
         this.feedback = `capture more...`;
       } else if (!board.hasCapturedAll()) {
         // show message that all have to be captured
@@ -74,7 +78,7 @@ export class PieceMoveService {
         board.initTurn();
       } else {
         this.feedback = "turn complted";
-        this.snapPiece(draggedPiece, checker, canvas);
+        this.snapPiece(draggedPiece, checker, canvas, boardSize);
         board.finalizePieceMove(draggedPiece);
       }
   }
@@ -82,7 +86,7 @@ export class PieceMoveService {
   private static restorePieceToOriginalLocation(draggedPiece, board, canvas) {
     board.restorePlayedPiecePosition(draggedPiece);
     let originalChecker = board.getChecker(draggedPiece.row, draggedPiece.col);
-    this.snapPiece(draggedPiece, originalChecker, canvas);
+    this.snapPiece(draggedPiece, originalChecker, canvas, board.getBoardSize());
   }
 
   /**
@@ -90,8 +94,8 @@ export class PieceMoveService {
    * @param piece the piece being played
    * @param checker the checker to snap to
    */
-  private static snapPiece(piece, checker, canvas) {
-    UtilService.positionElementOnTheBoard(piece, canvas);
+  private static snapPiece(piece, checker, canvas, boardSize) {
+    UtilService.positionElementOnTheBoard(piece, canvas, boardSize);
     let circle = piece.element.firstChild.firstChild;
     UtilService.setCircleAttributes(circle, checker.row, checker.column, 0, 0);
   }

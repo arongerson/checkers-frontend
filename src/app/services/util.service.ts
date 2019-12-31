@@ -23,10 +23,10 @@ export class UtilService {
 
   constructor() { }
 
-  public static getCheckerElement = (canvas, row: number, col: number) => {
+  public static getCheckerElement = (canvas, row: number, col: number, boardSize: number) => {
     const { width, height, size, startX, startY} = canvas;
-    row = UtilService.transformValue(row);
-    col = UtilService.transformValue(col);
+    row = UtilService.transformValue(row, boardSize);
+    col = UtilService.transformValue(col, boardSize);
     let div = document.createElement('div');
     let actualWidth = ((col + 1) * canvas.size) < width ? size : width - (col * size);
     let actualHeight = ((row + 1) * size) < height ? size : height - (row * size);
@@ -40,11 +40,11 @@ export class UtilService {
     return div;
   }
 
-  public static getPieceElement(canvas, color: string, row: number, col: number, type: number) {
+  public static getPieceElement(canvas, color: string, row: number, col: number, type: number, boardSize) {
     const { startX, startY, size } = canvas;
-    row = UtilService.transformValue(row);
-    col = UtilService.transformValue(col);
-    let circle = this.getCircle(row, col, color, size);
+    row = UtilService.transformValue(row, boardSize);
+    col = UtilService.transformValue(col, boardSize);
+    let circle = this.getCircle(row, col, color, size, boardSize);
     let svgContainer = this.getSvgContainer(size);
     let pieceDivElem = this.getPieceDivElement(startX, startY, row, col, size);
     svgContainer.appendChild(circle);
@@ -111,7 +111,7 @@ export class UtilService {
     return 1;
   }
 
-  public static getCircle(row, col, color,  size) {
+  public static getCircle(row, col, color, size, boardSize) {
     let svgNS = "http://www.w3.org/2000/svg";
     let circle = document.createElementNS(svgNS, "circle");
     let edgeOffset = this.getPieceEdgeOffset(size);
@@ -125,8 +125,8 @@ export class UtilService {
     circle.addEventListener('mouseout', this.mouseOutEffect);
     // row and col should be transformed back to true values since they are 
     // not for display
-    row = UtilService.transformValue(row);
-    col = UtilService.transformValue(col);
+    row = UtilService.transformValue(row, boardSize);
+    col = UtilService.transformValue(col, boardSize);
     this.setCircleAttributes(circle, row, col, 0, 0);
     return circle;
   }
@@ -160,10 +160,10 @@ export class UtilService {
     return div;
   }
 
-  public static positionElementOnTheBoard(piece, canvas) {
+  public static positionElementOnTheBoard(piece, canvas, boardSize) {
     const {startX, startY, size} = canvas;
-    let row = UtilService.transformValue(piece.row);
-    let col = UtilService.transformValue(piece.col);
+    let row = UtilService.transformValue(piece.row, boardSize);
+    let col = UtilService.transformValue(piece.col, boardSize);
     piece.element.style.left = `${startX + col * size}px`;
     piece.element.style.top = `${startY + row * size}px`;
     piece.element.style.transform = 'none';
@@ -211,9 +211,8 @@ export class UtilService {
 
   // the board has to be rotated 180 degrees for the creator
   // the rows and cols are transformed for anything that has to be shown on the screen 
-  private static transformValue(value) {
+  private static transformValue(value, boardSize) {
     let playerId = StorageService.getPlayerId();
-    let boardSize = 8;
     if (playerId === CREATOR_ID) {
       return boardSize - value - 1;
     }

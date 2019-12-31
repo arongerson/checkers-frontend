@@ -6,12 +6,24 @@
                 <mat-card>
                     <mat-card-title>Create game</mat-card-title>
                     <mat-card-content>
-                        <form>
-                            <mat-form-field class="full-width">
-                                <input matInput placeholder="Your name" [(ngModel)]="playerName" name="cname" required>
+                        <form [formGroup]="createForm" class="form">
+                            <mat-form-field>
+                              <input matInput placeholder="Your name" [formControl]="createForm.controls.name" required>
+                              <mat-error *ngIf="createForm.controls.name.invalid">
+                                {{getErrorMessage(createForm.controls.name)}}
+                              </mat-error>
                             </mat-form-field>
+                            <p>
+                                <label>Board size</label>
+                            </p>
+                            <mat-radio-group 
+                                aria-label="Board size" 
+                                [formControl]="createForm.controls.boardSize">
+                                <mat-radio-button value="8">8 x 8</mat-radio-button>
+                                <mat-radio-button value="10">10 x 10</mat-radio-button>
+                            </mat-radio-group>
                             <button 
-                                [disabled]="buttonDisabled"
+                                [disabled]="createForm.invalid || submitted"
                                 mat-raised-button 
                                 color="primary" 
                                 class="full-width" 
@@ -19,6 +31,7 @@
                                 Create
                             </button>
                         </form>
+                            
                     </mat-card-content>
                 </mat-card>
             </div>
@@ -26,20 +39,28 @@
                 <mat-card>
                     <mat-card-title>Join game</mat-card-title>
                     <mat-card-content>
-                        <mat-form-field class="full-width">
-                            <input matInput placeholder="Your name" [(ngModel)]="joinName" required>
-                        </mat-form-field>
-                        <mat-form-field class="full-width">
-                            <input matInput placeholder="Game code" [(ngModel)]="gameCode" required>
-                        </mat-form-field>
-                        <button 
-                            [disabled]="buttonDisabled"
-                            mat-raised-button 
-                            color="primary" 
-                            class="full-width" 
-                            (click)="join()">
-                            Join
-                        </button>
+                        <form [formGroup]="joinForm" class="form">
+                            <mat-form-field>
+                              <input matInput placeholder="Your name" [formControl]="joinForm.controls.name" required>
+                              <mat-error *ngIf="joinForm.controls.name.invalid">
+                                {{getErrorMessage(joinForm.controls.name)}}
+                              </mat-error>
+                            </mat-form-field>
+                            <mat-form-field>
+                                <input matInput placeholder="Game code" [formControl]="joinForm.controls.code" required>
+                                <mat-error *ngIf="joinForm.controls.code.invalid">
+                                  {{getErrorMessage(joinForm.controls.code)}}
+                                </mat-error>
+                            </mat-form-field>
+                            <button 
+                                [disabled]="joinForm.invalid || submitted"
+                                mat-raised-button 
+                                color="primary" 
+                                class="full-width" 
+                                (click)="join()">
+                                Join
+                            </button>
+                        </form>
                     </mat-card-content>
                 </mat-card>
             </div>

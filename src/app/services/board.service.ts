@@ -30,6 +30,7 @@ export class BoardService {
   private playerId: number;
   private hasCaptured = false;
   private hasCapturedDuringMove = false;
+  private boardSize: number;
   // this is set after the first successful move during the turn
   // it is checked for further moves to prevent un-played pieces from being dragged
   private draggedPiece;
@@ -53,6 +54,7 @@ export class BoardService {
   public initBoard(gameState) {
     this.checkers = gameState.checkers;
     this.playerInTurn = gameState.turn;
+    this.boardSize = gameState.boardSize;
     this.playerId = StorageService.getPlayerId();
     this.setRowAndColToPieces();
     if (this.isPlayerInTurn()) {
@@ -95,7 +97,7 @@ export class BoardService {
       setTimeout(() => {
         this.sound.playSwoop();
         UtilService.animate(piece, fromPoint, toPoint);
-        UtilService.positionElementOnTheBoard(piece, canvas);
+        UtilService.positionElementOnTheBoard(piece, canvas, this.boardSize);
         let circle = piece.element.firstChild.firstChild;
         UtilService.setCircleAttributes(circle, to.row, to.col, 0, 0);
         this.removeCapturedPiece(play.captured);
@@ -176,6 +178,10 @@ export class BoardService {
 
   public getChecker(row, col) {
     return this.checkers[row][col];
+  }
+
+  public getBoardSize() {
+    return this.boardSize;
   }
 
   public isInTurn() {
@@ -890,7 +896,7 @@ export class BoardService {
   }
 
   private indexWithinBounds(index) {
-    return index >= 0 && index <= 7;
+    return index >= 0 && index <= this.boardSize - 1;
   }
 
 }
