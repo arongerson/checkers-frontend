@@ -1,0 +1,16 @@
+<div class="chats">
+    <div class="chat-title">Chat</div>
+    <div id="chats">
+        <div 
+            *ngFor="let chat of savedChats" 
+            class="message" 
+            [ngClass]="{'your-message': chat.isYours, 'partner-message': !chat.isYours}">
+            {{chat.text}}
+        </div>
+    </div>
+    <div class="text-field">
+      <textarea placeholder="Type a message" rows="1" [(ngModel)]="text" (focus)="onFocus()">
+      </textarea>
+      <mat-icon matSuffix class="send-button" (click)="send()">send</mat-icon>
+    </div>
+</div>

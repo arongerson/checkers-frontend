@@ -5,14 +5,11 @@ import { Play, Position} from '../model/interface';
 import { StorageService } from './storage.service';
 
 import {
-  ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
+  HOST, ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
   ACTION_LEAVE, ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
   ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STATE
 } from '../util/constants';
 import { on } from 'cluster';
-
-const HOST = '192.168.0.11:8080';
-// const HOST = 'ec2-18-222-195-4.us-east-2.compute.amazonaws.com:8080';
 
 @Injectable({
   providedIn: 'root'
@@ -48,7 +45,6 @@ export class WebSocketsService {
   }
 
   onOpen = (data) => {
-    console.log('web-socket is open');
     this.getGameState();
   }
 
@@ -58,7 +54,6 @@ export class WebSocketsService {
 
   onClose = () => {
     console.log('closed connection');
-    this.connect();
   }
 
   onMessage(onMessageCallback: Function) {
@@ -125,7 +120,6 @@ export class WebSocketsService {
 
   getGameState() {
     if (this.webSocket.readyState === WebSocket.OPEN) {
-      console.log('getting the data');
       this.webSocket.send(JSON.stringify(
         {
           code: ACTION_STATE,
@@ -133,5 +127,15 @@ export class WebSocketsService {
         }
       ));
     }
+  }
+
+  sendChat(text) {
+    console.log('sending chat');
+    this.webSocket.send(JSON.stringify(
+      {
+        code: ACTION_CHAT,
+        data: text
+      }
+    ));
   }
 }

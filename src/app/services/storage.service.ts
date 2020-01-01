@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { Chat } from '../model/interface';
 
 const TOKEN_KEY = "token";
 const PLAYER_ID_KEY = "id";
@@ -6,6 +7,8 @@ const GAME_CREATED_KEY = "created";
 const GAME_STARTED_KEY = "started";
 const GAME_CODE_KEY = "gameCode";
 const GAME_OVER_KEY = "over";
+const UNREAD_KEY = "unread";
+const CHATS = "chats";
 
 @Injectable({
   providedIn: 'root'
@@ -82,6 +85,30 @@ export class StorageService {
   getGameCode() {
     let code = sessionStorage.getItem(GAME_CODE_KEY);
     return code;
+  }
+
+  saveNumberOfUnreadMessages(num: number) {
+    sessionStorage.setItem(UNREAD_KEY, num.toString());
+  }
+
+  getNumberOfUnreadMessages() {
+    let num = sessionStorage.getItem(UNREAD_KEY);
+    if (num === null || num === undefined) {
+      return 0;
+    }
+    return parseInt(num);
+  }
+
+  getSavedChats() {
+    let chats = sessionStorage.getItem(CHATS);
+    if (chats === null) {
+      return [];
+    }
+    return JSON.parse(chats);
+  }
+
+  saveChats(chats: Chat[]) {
+    sessionStorage.setItem(CHATS, JSON.stringify(chats));
   }
 
   clearGame() {

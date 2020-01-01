@@ -1,3 +1,10 @@
+import { environment } from '../../environments/environment';
+let host = '192.168.0.11:8080';
+if (environment.production) {
+  host = 'ec2-18-222-195-4.us-east-2.compute.amazonaws.com:8080';
+}
+export const HOST = host;
+
 export const ACTION_REGISTER = 1;
 export const ACTION_LOGIN = 2;
 export const ACTION_CHAT = 3;

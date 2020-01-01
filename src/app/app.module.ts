@@ -11,7 +11,8 @@ import {
   MatToolbarModule,
   MatIconModule,
   MatDividerModule,
-  MatRadioModule
+  MatRadioModule,
+  MatBadgeModule
 } from '@angular/material';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -19,12 +20,14 @@ import { AppComponent } from './app.component';
 import { WelcomeComponent } from './components/welcome/welcome.component';
 import { PlayComponent } from './components/play/play.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { ChatComponent } from './components/chat/chat.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     WelcomeComponent,
-    PlayComponent
+    PlayComponent,
+    ChatComponent
   ],
   imports: [
     BrowserModule,
@@ -40,6 +43,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     MatIconModule,
     MatDividerModule,
     MatRadioModule,
+    MatBadgeModule,
     BrowserAnimationsModule
   ],
   providers: [],

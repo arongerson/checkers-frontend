@@ -13,3 +13,8 @@ export interface Point {
     x: number;
     y: number;
 }
+
+export interface Chat {
+    isYours: boolean;
+    text: string;
+}

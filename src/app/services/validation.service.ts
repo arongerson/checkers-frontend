@@ -23,6 +23,13 @@ export class ValidationService {
     ];
   }
 
+  getChatValidators() {
+    return [
+      Validators.minLength(1),
+      Validators.maxLength(255)
+    ];
+  }
+
   getErrorMessage(control: AbstractControl) {
     return control.hasError('required') ? 'You must enter a value' :
       control.hasError('minlength') ? 'Length must be at least ' + control.errors.minlength.requiredLength :

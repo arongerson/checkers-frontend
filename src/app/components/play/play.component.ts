@@ -23,10 +23,14 @@ export class PlayComponent implements OnInit {
   gameOver = false;
   gameStarted = true;
   gameTerminated = false;
+  showChats = false;
   canvas: any;
   creatorName: string;
   joinerName: string;
   gameState: string;
+  chat: string;
+  numUnreadMessages: number = 0;
+  unreadMessagesBadge: string = "";
 
   constructor(
     private storage: StorageService,
@@ -45,12 +49,15 @@ export class PlayComponent implements OnInit {
       this.dragCompletedCallback);
     this.socket.onMessage(this.onMessage);
     this.socket.getGameState();
+    this.numUnreadMessages = this.storage.getNumberOfUnreadMessages();
+    this.updateUnreadBadge();
   }
 
   onMessage = (data) => {
     let payLoad = JSON.parse(data.data);
     let code = parseInt(payLoad.code);
     if (code === ACTION_CHAT) {
+      this.processChat(payLoad.data);
     } else if (code === ACTION_ERROR) {
     } else if (code === ACTION_CLOSED) {
       this.processGameClosed();
@@ -65,6 +72,28 @@ export class PlayComponent implements OnInit {
       this.processGameOver(payLoad.data);
     } else if (code === ACTION_INFO) {
     }
+  }
+
+  processChat(data) {
+    let chatData = JSON.parse(data);
+    this.chat = chatData.chat;
+    this.numUnreadMessages++;
+    this.storage.saveNumberOfUnreadMessages(this.numUnreadMessages);
+    this.updateUnreadBadge();
+  }
+
+  updateUnreadBadge() {
+    if (this.numUnreadMessages > 0) {
+      this.unreadMessagesBadge = this.numUnreadMessages.toString();
+    } else {
+      this.unreadMessagesBadge = "";
+    }
+  }
+
+  clearUnread() {
+    this.numUnreadMessages = 0;
+    this.storage.saveNumberOfUnreadMessages(0);
+    this.updateUnreadBadge();
   }
 
   processPlay(data) {
@@ -82,7 +111,7 @@ export class PlayComponent implements OnInit {
 
   processOtherClosed() {
     this.gameTerminated = true;
-    PieceMoveService.setFeedback("Your playmate left the game");
+    PieceMoveService.setFeedback("Your opponent left the game");
   }
 
   onState(data) {
@@ -155,6 +184,10 @@ export class PlayComponent implements OnInit {
       this.storage.clearGame();
       this.socket.leaveGame();
     }
+  }
+
+  toggleChats() {
+    this.showChats = !this.showChats;
   }
 
   restart() {
