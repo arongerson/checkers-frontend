@@ -12,7 +12,7 @@ import { StorageService } from '../../services/storage.service';
 export class ChatComponent implements OnInit {
 
   @Input() 
-  newMessage: string;
+  newMessage: string = '';
 
   @Output() 
   event = new EventEmitter();
@@ -37,31 +37,31 @@ export class ChatComponent implements OnInit {
   }
 
   ngOnChanges() {
-    if (this.chatDiv && this.newMessage) {
+    if (this.chatDiv && this.newMessage !== '') {
       this.messages.push(this.newMessage);
       let element = this.createChatElement(this.newMessage, false);
       this.chatDiv.appendChild(element);
       this.chatDiv.scrollTop = this.chatDiv.scrollHeight;
-      this.savedChats.push({isYours: false, text: this.newMessage});
-      this.storage.saveChats(this.savedChats);
+      this.savedChats.push();
+      this.storage.saveChat({isYours: false, text: this.newMessage});
     }
+    this.newMessage = '';
   }
 
   send() {
     this.text = this.text.trim();
     if (this.text !== '') {
       this.socket.sendChat(this.text);
-      this.savedChats.push({isYours: true, text: this.text});
-      this.storage.saveChats(this.savedChats);
+      this.storage.saveChat({isYours: true, text: this.text});
       let element = this.createChatElement(this.text, true);
       this.chatDiv.appendChild(element);
       this.chatDiv.scrollTop = this.chatDiv.scrollHeight;
-      this.text = "";
+      this.text = '';
     }
   }
 
   createChatElement(text: string, yourMessage: boolean) {
-    let element = document.createElement('div');
+    let element = document.createElement('div') as any;
     element.innerHTML = text;
     let backgroundColor = yourMessage ? '#00b0ff' : 'palegreen';
     let align = yourMessage ? 'flex-end' : 'flex-start';
@@ -69,6 +69,7 @@ export class ChatComponent implements OnInit {
     element.style.padding = '0.7rem';
     element.style.marginBottom = '0.8rem';
     element.style.borderRadius = '0.6rem';
+    element.style.overflowWrap = 'break-word';
     element.style.backgroundColor = backgroundColor;
     element.style.alignSelf = align;
     return element;

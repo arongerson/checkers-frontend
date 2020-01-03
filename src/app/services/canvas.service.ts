@@ -6,6 +6,7 @@ import {
   ROW_ATTRIBUTE,
   COL_ATTRIBUTE
 } from '../util/constants';
+import { CommentStmt } from '@angular/compiler';
 
 @Injectable({
   providedIn: 'root'
@@ -89,7 +90,7 @@ export class CanvasService {
         this.initialY = e.clientY - parseFloat(this.draggedElement.getAttribute(OFFSET_Y_ATTR));
       }
     }
-  }
+  } 
 
   mouseMove = (e) => {
     if (this.draggedElement !== undefined && this.draggedElement !== null) {

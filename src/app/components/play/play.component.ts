@@ -1,4 +1,5 @@
 import { Component, OnInit, HostListener } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { StorageService } from '../../services/storage.service';
 import { BoardService } from '../../services/board.service';
@@ -33,6 +34,7 @@ export class PlayComponent implements OnInit {
   unreadMessagesBadge: string = "";
 
   constructor(
+    private _snackBar: MatSnackBar,
     private storage: StorageService,
     private board: BoardService,
     private socket: WebSocketsService,
@@ -47,6 +49,7 @@ export class PlayComponent implements OnInit {
       this.isPieceMovableCallback,
       this.dragStartCallback, 
       this.dragCompletedCallback);
+      PieceMoveService.snackbarCallback = this.openSnackBar;
     this.socket.onMessage(this.onMessage);
     this.socket.getGameState();
     this.numUnreadMessages = this.storage.getNumberOfUnreadMessages();
@@ -188,6 +191,7 @@ export class PlayComponent implements OnInit {
 
   toggleChats() {
     this.showChats = !this.showChats;
+    this.openSnackBar('Choose a path that captures the maximum pieces');
   }
 
   restart() {
@@ -199,6 +203,7 @@ export class PlayComponent implements OnInit {
   }
 
   dragStartCallback = (target) => {
+    this._snackBar.dismiss();
     PieceMoveService.clearFeedback();
     this.board.initMove();
     return this.board.getDraggedPiece(target);
@@ -225,6 +230,12 @@ export class PlayComponent implements OnInit {
     if (checkers) {
       this.processGameState();
     }
+  }
+
+  openSnackBar = (message: string) => {
+    this._snackBar.open(message, '', {
+      duration: 5000,
+    });
   }
 
 }

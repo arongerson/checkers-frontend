@@ -53,23 +53,22 @@
         </mat-menu>
         <mat-toolbar color="primary">
             <mat-toolbar-row>
-              <span>You</span>
+              <span class="small-screen">You</span>
               <mat-icon 
-                class="icon"
+                class="icon small-screen"
                 [ngClass]="{'creator-color': isCreator(), 'joiner-color': !isCreator()}" 
                 aria-hidden="false" 
                 aria-label="you icon">
                   person
               </mat-icon>
-              <span>{{getOpponentName()}}</span>
+              <span class="small-screen">{{getOpponentName()}}</span>
               <mat-icon 
-                class="icon" 
+                class="icon small-screen" 
                 [ngClass]="{'creator-color': !isCreator(), 'joiner-color': isCreator()}" 
                 aria-hidden="false" 
                 aria-label="opponent icon">
                   person
               </mat-icon>
-              <mat-divider direction="vertical"></mat-divider>
               <mat-icon 
                 class="icon" 
                 [ngClass]="{'turn-color': inTurn(), 'no-turn-color': !inTurn()}" 

@@ -18,6 +18,7 @@ export class WebSocketsService {
 
   token: string;
   webSocket: any;
+  closed = true;
   onMessageCallback: Function;
 
   constructor(private storage: StorageService) { 
@@ -25,13 +26,16 @@ export class WebSocketsService {
   }
 
   connect() {
-    this.webSocket = this.initWebSocket();
-    if (this.webSocket) {
-      this.webSocket.onopen = this.onOpen;
-      this.webSocket.onerror = this.onError;
-      this.webSocket.onclose = this.onClose;
-      if (this.onMessageCallback) {
-        this.webSocket.onMessage = this.onMessageCallback;
+    if (this.closed) {
+      this.closed = false;
+      this.webSocket = this.initWebSocket();
+      if (this.webSocket) {
+        this.webSocket.onopen = this.onOpen;
+        this.webSocket.onerror = this.onError;
+        this.webSocket.onclose = this.onClose;
+        if (this.onMessageCallback) {
+          this.webSocket.onMessage = this.onMessageCallback;
+        }
       }
     }
   }
@@ -116,6 +120,7 @@ export class WebSocketsService {
         data: ""
       }
     ));
+    this.closed = true;
   }
 
   getGameState() {
@@ -130,7 +135,6 @@ export class WebSocketsService {
   }
 
   sendChat(text) {
-    console.log('sending chat');
     this.webSocket.send(JSON.stringify(
       {
         code: ACTION_CHAT,

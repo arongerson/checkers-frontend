@@ -146,20 +146,6 @@ export class UtilService {
     e.target.setAttributeNS(null,"opacity","1");
   }
 
-  public static getBackgroundChecker(row: number, col: number, width: number, height: number, size: number) {
-    let div = document.createElement('div');
-    let actualWidth = ((col + 1) * size) < width ? size : width - (col * size);
-    let actualHeight = ((row + 1) * size) < height ? size : height - (row * size);
-    div.style.height = `${actualHeight}px`;
-    div.style.width = `${actualWidth}px`;
-    div.style.position = `absolute`;
-    div.style.left = `${col * size}px`;
-    div.style.top = `${row * size}px`;
-    let color = ((row + col) % 2 == 0) ? '#111' : '#000';
-    div.style.backgroundColor = color;
-    return div;
-  }
-
   public static positionElementOnTheBoard(piece, canvas, boardSize) {
     const {startX, startY, size} = canvas;
     let row = UtilService.transformValue(piece.row, boardSize);

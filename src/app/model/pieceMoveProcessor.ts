@@ -12,6 +12,7 @@ import { UtilService } from '../services/util.service';
 export class PieceMoveService {
 
     private static feedback = "";
+    static snackbarCallback: Function;
 
     public static processPieceMove(draggedPiece, board, canvas, target) {
         let checker = board.getLandingChecker(draggedPiece.element, canvas.size);
@@ -19,7 +20,8 @@ export class PieceMoveService {
         if (checker !== null && board.notSameChecker(checker, target)) {
           this.validatePieceMove(draggedPiece, board, canvas, checker);
         } else {
-          this.feedback = `wrong move`;
+          // this.feedback = `wrong move`;
+          this.snackbarCallback(`wrong move`);
           let prevChecker = board.getChecker(draggedPiece.row, draggedPiece.col);
           this.snapPiece(draggedPiece, prevChecker, canvas, boardSize);
         }
@@ -30,7 +32,8 @@ export class PieceMoveService {
         if (board.isValidMove(draggedPiece, checker)) {
           this.checkMoveType(draggedPiece, board, canvas, checker);
         } else {
-          this.feedback = `wrong move`;
+          // this.feedback = `wrong move`;
+          this.snackbarCallback(`wrong move`);
           let prevChecker = board.getChecker(draggedPiece.row, draggedPiece.col);
           this.snapPiece(draggedPiece, prevChecker, canvas, boardSize);
         }
@@ -51,11 +54,13 @@ export class PieceMoveService {
       board.updatePlayingPieceAfterMove(draggedPiece, checker);
       board.saveMovePlay([prevPieceRow, prevPieceCol], [checker.row, checker.column]);
       if (!board.hasCapturedAll()) {
-        this.feedback = `should capture`;
+        // this.feedback = `you should capture`;
+        this.snackbarCallback(`you should capture`);
         this.restorePieceToOriginalLocation(draggedPiece, board, canvas);
         board.initTurn();
       } else {
         this.feedback = "turn completed";
+        // this.snackbarCallback(`turn completed`);
         this.snapPiece(draggedPiece, checker, canvas, boardSize);
         board.finalizePieceMove(draggedPiece);
       }
@@ -70,14 +75,16 @@ export class PieceMoveService {
       if (board.canCaptureMore(draggedPiece)) {
         board.setDraggedPiece(draggedPiece);
         this.snapPiece(draggedPiece, checker, canvas, boardSize);
-        this.feedback = `capture more...`;
+        // this.feedback = `capture more...`;
+        this.snackbarCallback(`capture more pieces`);
       } else if (!board.hasCapturedAll()) {
         // show message that all have to be captured
         this.feedback = `Choose a path that captures ${board.getNumberToBeCaptured()} pieces`;
         this.restorePieceToOriginalLocation(draggedPiece, board, canvas);
         board.initTurn();
       } else {
-        this.feedback = "turn complted";
+        this.feedback = "turn completed";
+        // this.snackbarCallback(`turn completed`);
         this.snapPiece(draggedPiece, checker, canvas, boardSize);
         board.finalizePieceMove(draggedPiece);
       }

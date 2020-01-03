@@ -59,36 +59,13 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.drawCheckers();
   }
 
   getErrorMessage(control) {
     return this.validation.getErrorMessage(control);
   }
 
-  drawCheckers() {
-    this.updateCheckers();
-  }
-
-  updateCheckers() {
-    let element = document.getElementById('body');
-    let firstChild = element.firstChild;
-    element.innerHTML = '';
-    element.appendChild(firstChild);
-    let rect = element.getBoundingClientRect();
-    let width = rect.width;
-    let height = rect.height;
-    let size = 4;
-    for (let i = 0; i < Math.ceil(height/ size) + 1; i++) {
-      for (let j = 0; j < Math.ceil(width/ size); j++) {
-        let backgroundChecker = UtilService.getBackgroundChecker(i, j, width, height, size);
-        element.appendChild(backgroundChecker);
-      }
-    }
-  }
-
   onMessage = (data) => {
-    console.log('on-message: ' + data.data);
     let payLoad = JSON.parse(data.data);
     let code = parseInt(payLoad.code);
     if (code === ACTION_CREATE) {
@@ -155,10 +132,5 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
 
   cancelGame() {
 
-  }
-
-  @HostListener('window:resize', ['$event'])
-  onResize(event) {
-    this.updateCheckers();
   }
 }

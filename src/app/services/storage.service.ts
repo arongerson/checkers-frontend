@@ -104,10 +104,12 @@ export class StorageService {
     if (chats === null) {
       return [];
     }
-    return JSON.parse(chats);
+    return JSON.parse(chats) as Chat[];
   }
 
-  saveChats(chats: Chat[]) {
+  saveChat(chat: Chat) {
+    let chats = this.getSavedChats();
+    chats.push(chat);
     sessionStorage.setItem(CHATS, JSON.stringify(chats));
   }
 

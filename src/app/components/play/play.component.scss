@@ -127,3 +127,22 @@
     margin: 0;
     display: block
 }
+
+  /* Responsive Styles */
+@media screen and (max-width: 767px) {
+
+}
+
+@media screen and (max-width: 575px) {
+    .small-screen {
+        display: none;
+    }
+}
+
+@media screen and (max-width: 400px) {
+    .chats {
+        right: 0px;
+        height: 100%;
+        width: 100%;
+    }
+}

@@ -9,7 +9,11 @@
         </div>
     </div>
     <div class="text-field">
-      <textarea placeholder="Type a message" rows="1" [(ngModel)]="text" (focus)="onFocus()">
+      <textarea 
+        placeholder="Type a message" 
+        rows="1" 
+        [(ngModel)]="text" 
+        (focus)="onFocus($event)">
       </textarea>
       <mat-icon matSuffix class="send-button" (click)="send()">send</mat-icon>
     </div>

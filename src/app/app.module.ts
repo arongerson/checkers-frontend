@@ -12,7 +12,8 @@ import {
   MatIconModule,
   MatDividerModule,
   MatRadioModule,
-  MatBadgeModule
+  MatBadgeModule,
+  MatSnackBarModule
 } from '@angular/material';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -44,6 +45,7 @@ import { ChatComponent } from './components/chat/chat.component';
     MatDividerModule,
     MatRadioModule,
     MatBadgeModule,
+    MatSnackBarModule,
     BrowserAnimationsModule
   ],
   providers: [],
