@@ -191,7 +191,6 @@ export class PlayComponent implements OnInit {
 
   toggleChats() {
     this.showChats = !this.showChats;
-    this.openSnackBar('Choose a path that captures the maximum pieces');
   }
 
   restart() {

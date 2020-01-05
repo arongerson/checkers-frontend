@@ -78,7 +78,6 @@ export class BoardService {
   public updatePlay(data, canvas) {
     let playsText = data.plays;
     let plays = JSON.parse(playsText);
-    let animTime = ANIMATION_TIME;
     let n = plays.length;
     for (let i = 0; i < plays.length; i++) {
       let play = plays[i];
@@ -102,7 +101,6 @@ export class BoardService {
         UtilService.setCircleAttributes(circle, to.row, to.col, 0, 0);
         this.removeCapturedPiece(play.captured);
       }, i*ANIMATION_TIME + (i + 1) * ANIMATION_DELAY);
-
     }
     setTimeout(() => {
       this.updateTypeIfKing(plays);
