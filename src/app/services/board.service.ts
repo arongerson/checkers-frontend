@@ -43,6 +43,11 @@ export class BoardService {
   // original row and column before the piece is moved
   private row: number;
   private col: number;
+  // stores the last moves played by the opponent which 
+  // can be used for replaying
+  public previousPlay: any;
+  public previousCaptured = [];
+  public canReplay = false;
 
   constructor(private sound: SoundService) {
   }
@@ -75,10 +80,10 @@ export class BoardService {
     }
   }
 
-  public updatePlay(data, canvas) {
-    let playsText = data.plays;
-    let plays = JSON.parse(playsText);
+  public updatePlay(plays, canvas) {
+    this.previousPlay = Object.assign([], plays);
     let n = plays.length;
+    this.previousCaptured = [];
     for (let i = 0; i < plays.length; i++) {
       let play = plays[i];
       let from = play.from;
@@ -116,12 +121,43 @@ export class BoardService {
         let cPiece = this.checkers[captured.row][captured.col].piece;
         this.checkers[captured.row][captured.col].piece = null;
         cPiece.element.parentNode.removeChild(cPiece.element);
+        this.previousCaptured.push(cPiece);
       }, 500);
     }
   }
 
   public getNumberToBeCaptured() {
     return this.numberOfPiecesToBeCaptured;
+  }
+
+  replay() {
+    this.canReplay = false;
+    let canvas = this.checkers[0][0].element.parentNode;
+    // restore captured pieces
+    for (let captured of this.previousCaptured) {
+      console.log(JSON.stringify(captured.element));
+      canvas.appendChild(captured.element);
+      this.checkers[captured.row][captured.col].piece = captured;
+    }
+    // restore played piece
+    console.log(JSON.stringify(this.previousPlay));
+    let lastPlay = this.previousPlay[this.previousPlay.length - 1];
+    let firstPlay = this.previousPlay[0];
+    let from = firstPlay.from;
+    let fromChecker = this.checkers[from.row][from.col];
+    let to = lastPlay.to;
+    let toChecker = this.checkers[to.row][to.col];
+    let piece = toChecker.piece;
+    piece.row = from.row;
+    piece.col = from.col;
+    fromChecker.piece = piece;
+    toChecker.piece = null;
+    UtilService.positionElementOnTheBoard(piece, canvas, this.boardSize);
+    let circle = piece.element.firstChild.firstChild;
+    UtilService.setCircleAttributes(circle, from.row, from.col, 0, 0);
+    // restore player in turn
+    this.playerInTurn = -this.playerInTurn;
+    this.updatePlay(this.previousPlay, canvas);
   }
 
   updateTypeIfKing(plays) {
@@ -144,6 +180,7 @@ export class BoardService {
     this.captured = [];
     this.plays = [];
     this.playCompleted = false;
+    this.canReplay = true;
     this.calculateMaxNumberOfPiecesToBeCaptured();
   }
 
@@ -152,6 +189,7 @@ export class BoardService {
    */
   public initMove() {
     this.hasCapturedDuringMove = false;
+    this.canReplay = false;
   }
 
   public setDraggedPiece(piece) {

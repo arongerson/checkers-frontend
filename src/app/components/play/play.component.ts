@@ -101,8 +101,9 @@ export class PlayComponent implements OnInit {
 
   processPlay(data) {
     let playData = JSON.parse(data);
+    let plays = JSON.parse(playData.plays);
     PieceMoveService.setFeedback("Your turn");
-    this.board.updatePlay(playData, this.canvas);
+    this.board.updatePlay(plays, this.canvas);
   }
 
   processGameClosed() {
@@ -235,6 +236,14 @@ export class PlayComponent implements OnInit {
     this._snackBar.open(message, '', {
       duration: 5000,
     });
+  }
+
+  replay() {
+    this.board.replay();
+  }
+
+  canReplay() {
+    return this.board.canReplay;
   }
 
 }

@@ -79,6 +79,14 @@
               <span>{{getFeedback()}}</span>
               <span class="spacer"></span>
               <mat-icon 
+                *ngIf="canReplay()"
+                class="icon" 
+                aria-hidden="false" 
+                aria-label="replay" 
+                (click)="replay()">
+                play_arrow
+              </mat-icon>
+              <mat-icon 
                   matBadge="{{unreadMessagesBadge}}" 
                   matBadgeColor="warn"
                   size="small"
