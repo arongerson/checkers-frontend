@@ -7,6 +7,7 @@ import { UtilService } from '../../services/util.service';
 import { WebSocketsService } from '../../services/web-sockets.service';
 import { PieceMoveService } from '../../model/pieceMoveProcessor';
 import { CanvasService } from '../../services/canvas.service';
+import { VchatService } from '../../services/vchat.service';
 import {
   ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
   ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
@@ -32,6 +33,9 @@ export class PlayComponent implements OnInit {
   chat: string;
   numUnreadMessages: number = 0;
   unreadMessagesBadge: string = "";
+  videoChatUuid: string;
+  userVideo: any;
+  partnerVideo: any;
 
   constructor(
     private _snackBar: MatSnackBar,
@@ -39,17 +43,21 @@ export class PlayComponent implements OnInit {
     private board: BoardService,
     private socket: WebSocketsService,
     private canvasService: CanvasService,
+    private vchatService: VchatService,
     private router: Router
   ) { }
 
   ngOnInit() {
     this.canvas = document.getElementById('canvas');
+    this.userVideo = document.getElementById('userVideo');
+    this.partnerVideo = document.getElementById('partnerVideo');
     this.canvasService.init(
       this.canvas, 
       this.isPieceMovableCallback,
       this.dragStartCallback, 
-      this.dragCompletedCallback);
-      PieceMoveService.snackbarCallback = this.openSnackBar;
+      this.dragCompletedCallback
+    );
+    PieceMoveService.snackbarCallback = this.openSnackBar;
     this.socket.onMessage(this.onMessage);
     this.socket.getGameState();
     this.numUnreadMessages = this.storage.getNumberOfUnreadMessages();
@@ -126,6 +134,8 @@ export class PlayComponent implements OnInit {
     this.gameState = gameState.status; // misnomer
     this.gameOver = false;
     this.gameStarted = true;
+    this.videoChatUuid = gameState.vchatUuid;
+    this.vchatService.initVideo(this.videoChatUuid, this.userVideo, this.partnerVideo, StorageService.getPlayerId());
     this.processGameState();
   }
 

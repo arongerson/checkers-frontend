@@ -43,7 +43,7 @@ export class WebSocketsService {
   initWebSocket() {
     this.token = this.storage.getToken();
     if ("WebSocket" in window) {
-      return new WebSocket(`ws://${HOST}/Checkers/connect/${this.token}`);
+      return new WebSocket(`wss://${HOST}/Checkers/connect/${this.token}`);
     }
     throwError('web sockets not supported');
   }

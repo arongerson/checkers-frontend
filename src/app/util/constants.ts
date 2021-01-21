@@ -1,7 +1,7 @@
 import { environment } from '../../environments/environment';
-let host = '192.168.0.11:8080';
+let host = '192.168.1.3:8080';
 if (environment.production) {
-  host = 'ec2-18-222-195-4.us-east-2.compute.amazonaws.com:8080';
+  host = 'checkers-server.aronkageza.com:8443';
 }
 export const HOST = host;
 
