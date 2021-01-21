@@ -7,7 +7,7 @@ import { StorageService } from './storage.service';
 import {
   HOST, ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
   ACTION_LEAVE, ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
-  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STATE
+  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STATE, WS_PROTOCOL
 } from '../util/constants';
 import { on } from 'cluster';
 
@@ -43,7 +43,7 @@ export class WebSocketsService {
   initWebSocket() {
     this.token = this.storage.getToken();
     if ("WebSocket" in window) {
-      return new WebSocket(`wss://${HOST}/Checkers/connect/${this.token}`);
+      return new WebSocket(`${WS_PROTOCOL}://${HOST}/Checkers/connect/${this.token}`);
     }
     throwError('web sockets not supported');
   }
