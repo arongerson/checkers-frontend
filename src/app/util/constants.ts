@@ -1,9 +1,12 @@
 import { environment } from '../../environments/environment';
 let host = '192.168.1.3:8080';
+let videoChatServer = 'https://localhost:8000/';
 if (environment.production) {
   host = 'checkers-server.aronkageza.com:8443';
+  videoChatServer = 'https://checkers-server.aronkageza.com:8000/';
 }
 export const HOST = host;
+export const VIDEO_CHAT_SERVER = videoChatServer;
 
 export const ACTION_REGISTER = 1;
 export const ACTION_LOGIN = 2;

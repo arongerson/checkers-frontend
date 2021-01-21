@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { io } from 'socket.io-client';
+import { VIDEO_CHAT_SERVER } from '../util/constants';
 
 @Injectable({
   providedIn: 'root'
@@ -22,7 +23,7 @@ export class VchatService {
             this.userVideo.muted = true;
             this.userVideo.srcObject = stream;
             this.userStream = stream;
-            this.socketRef = io("https://checkers-server.aronkageza.com:8000/");
+            this.socketRef = io(VIDEO_CHAT_SERVER);
             this.socketRef.emit("join room", `${roomID}:${playerID}`);
 
             this.socketRef.on('other user', userID => {
