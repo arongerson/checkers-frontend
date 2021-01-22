@@ -663,7 +663,7 @@ export class BoardService {
   }
 
   /**
-   * this method changed the ownership of the pieces ought be captured,
+   * this method changes the ownership of the pieces ought be captured,
    * when the method completes, the ownership should be restored
    * @param emptyCheckers 
    */
@@ -801,7 +801,7 @@ export class BoardService {
     // update piece position
     piece.row = fartherChecker.row;
     piece.col = fartherChecker.column;
-    // update the captured piece owner to current player to avoid back-capturing
+    // update the captured piece owner to current player to avoid back-capturing               
     captured.owner.id = -captured.owner.id;
     // check further capturing 
     let count = 1 + this.getOrdinaryPieceMaxPossibleCaptures(piece);

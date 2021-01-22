@@ -18,3 +18,12 @@ export interface Chat {
     isYours: boolean;
     text: string;
 }
+
+export interface Rule {
+    description: string;
+    yesNo: boolean;
+}
+
+export interface Rules {
+    rules: Rule[];
+}

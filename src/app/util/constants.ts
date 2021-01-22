@@ -1,6 +1,7 @@
 import { environment } from '../../environments/environment';
-let host = '192.168.1.3:8080';
+let host = '192.168.1.2:8080';
 let videoChatServer = 'https://localhost:8000/';
+videoChatServer = 'https://checkers-server.aronkageza.com:8000/';
 let wsProtocol = 'ws';
 if (environment.production) {
   host = 'checkers-server.aronkageza.com:8443';
