@@ -12,10 +12,16 @@
 .body {
     display: flex;
     position: relative;
-    background-color: #000;
-    background-image: url('../../../assets/img/bg.png');
     flex: 1 1 auto;
+    padding-bottom: 1rem;
+    background-color: #000;
+    background-image: url('../../../assets/img/bg2.png');
+}
+
+body {
     height: 100%;
+    position: absolute;
+    width: 100%;
 }
 
 #board {

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Chat } from '../model/interface';
+import { CREATOR_ID } from '../util/constants';
 
 const TOKEN_KEY = "token";
 const PLAYER_ID_KEY = "id";
@@ -119,5 +120,13 @@ export class StorageService {
 
   clearGame() {
     sessionStorage.clear();
+  }
+
+  isCreator() {
+    let playerId = StorageService.getPlayerId();
+    if (playerId === undefined || playerId === null) {
+      return true;
+    }
+    return playerId === CREATOR_ID;
   }
 }

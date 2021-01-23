@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { StorageService } from '../../services/storage.service';
 
 @Component({
   selector: 'app-lobby',
@@ -7,9 +8,16 @@ import { Component, OnInit } from '@angular/core';
 })
 export class LobbyComponent implements OnInit {
 
-  constructor() { }
+  isCreator = false;
+  gameCode: string;
+
+  constructor(
+    private storageService: StorageService
+  ) { }
 
   ngOnInit() {
+    this.isCreator = this.storageService.isCreator();
+    this.gameCode = this.storageService.getGameCode();
   }
 
 }

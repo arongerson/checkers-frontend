@@ -111,14 +111,14 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   }
 
   processGameJoined = (data) => {
-    // to be moved to the lobby component
     let content = JSON.parse(data);
     this.storage.savePlayerId(content.playerId);
     this.submitted = false;
-    this.router.navigate(['play']);
+    this.router.navigate(['lobby']);
   }
 
   processOtherJoined = (data) => {
+    // to be moved to the lobby component
     this.router.navigate(['lobby']);
   }
 

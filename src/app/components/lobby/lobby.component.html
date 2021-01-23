@@ -1,1 +1,35 @@
-<p>lobby works!</p>
+<div class="container">
+    <div class="title">
+        <h1>Checkers</h1>
+    </div>
+    <div class="body" id="body">
+        <div class="dummy">
+            <div *ngIf="!gameCreated" class="lobby-panels game-settings">
+                <mat-card>
+                    <mat-card-title>Game created</mat-card-title>
+                    <mat-card-content>
+                        <div>
+                            Waiting for your opponent to join the game. Game code: <strong>{{gameCode}}</strong>
+                        </div>
+                        <div>
+                            {{opponentName}} joined the game
+                        </div>
+                        <form [formGroup]="createForm" class="form">
+                            <p>
+                                <label>Board size</label>
+                            </p>
+                            <app-rules [isCreator]="isCreator()"></app-rules>
+                        </form>
+                    </mat-card-content>
+                </mat-card>
+            </div>
+            <div *ngIf="!gameCreated" class="lobby-panels video">
+                <mat-card>
+                    <mat-card-content>
+    
+                    </mat-card-content>
+                </mat-card>
+            </div>
+        </div>
+    </div>
+</div>
