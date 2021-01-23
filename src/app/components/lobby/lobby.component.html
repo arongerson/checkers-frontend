@@ -14,12 +14,8 @@
                         <div>
                             {{opponentName}} joined the game
                         </div>
-                        <form [formGroup]="createForm" class="form">
-                            <p>
-                                <label>Board size</label>
-                            </p>
-                            <app-rules [isCreator]="isCreator()"></app-rules>
-                        </form>
+                        <p><label>Board size</label></p>
+                        <app-rules [isCreator]="isCreator"></app-rules>
                     </mat-card-content>
                 </mat-card>
             </div>

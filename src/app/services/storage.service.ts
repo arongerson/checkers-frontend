@@ -10,6 +10,8 @@ const GAME_STARTED_KEY = "started";
 const GAME_CODE_KEY = "gameCode";
 const GAME_OVER_KEY = "over";
 const UNREAD_KEY = "unread";
+const OPPONENT_NAME_KEY = 'opponent_name';
+const BOARD_SIZE_KEY = 'board_size';
 const CHATS = "chats";
 const RULES = 'rules';
 
@@ -142,5 +144,21 @@ export class StorageService {
       return null;
     }
     return JSON.parse(rules) as Rule[];
+  }
+
+  saveBoardSize(boardSize: any) {
+    sessionStorage.setItem(BOARD_SIZE_KEY, JSON.stringify(boardSize));
+  }
+
+  getBoardSize() {
+    sessionStorage.getItem(BOARD_SIZE_KEY);
+  }
+
+  saveOpponentName(opponentName: any) {
+    sessionStorage.setItem(OPPONENT_NAME_KEY, JSON.stringify(opponentName));
+  }
+
+  getOpponentName() {
+    sessionStorage.getItem(OPPONENT_NAME_KEY);
   }
 }

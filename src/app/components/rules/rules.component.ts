@@ -55,6 +55,8 @@ export class RulesComponent implements OnInit, OnChanges {
     const rules = this.storageService.getRules();
     if (rules) {
       this.rules = rules;
+    } else {
+      this.storageService.saveRules(this.rules);
     }
   }
 
@@ -74,6 +76,13 @@ export class RulesComponent implements OnInit, OnChanges {
       rules[rule.key] = rule.yesNo;
     });
     return rules;
+  }
+
+  updateRules(rules: any) {
+    this.rules.forEach((rule) => {
+      rule.yesNo = rules[rule.key];
+    });
+    this.storageService.saveRules(this.rules);
   }
 
 
