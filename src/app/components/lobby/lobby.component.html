@@ -8,13 +8,16 @@
                 <mat-card>
                     <mat-card-title>Game created</mat-card-title>
                     <mat-card-content>
-                        <div>
-                            Waiting for your opponent to join the game. Game code: <strong>{{gameCode}}</strong>
+                        <div *ngIf="!gameJoined && isCreator">
+                            Waiting for your opponent to join the game. <br/> Game code: <strong>{{gameCode}}</strong>
                         </div>
-                        <div>
-                            {{opponentName}} joined the game
+                        <div *ngIf="gameJoined && isCreator">
+                            {{gameJoinedMessage}}
                         </div>
-                        <p><label>Board size</label></p>
+                        <div *ngIf="gameJoined && !isCreator">
+                            {{opponentName}} created the game
+                        </div>
+                        <p><label>Board size: <strong>{{boardSize}}x{{boardSize}}</strong></label></p>
                         <app-rules [isCreator]="isCreator"></app-rules>
                     </mat-card-content>
                 </mat-card>

@@ -11,6 +11,8 @@ export class LobbyComponent implements OnInit {
   isCreator = false;
   gameCode: string;
   opponentName: string;
+  gameJoined = false;
+  gameJoinedMessage: string;
 
   constructor(
     private storageService: StorageService
