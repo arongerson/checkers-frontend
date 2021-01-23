@@ -1,6 +1,6 @@
 import { Component, OnInit, OnChanges, SimpleChanges, Input, EventEmitter, Output } from '@angular/core';
 import { Rule, Rules } from '../../model/interface';
-import { MatSelectionListChange } from '@angular/material';
+import { StorageService } from '../../services/storage.service';
 
 @Component({
   selector: 'app-rules',
@@ -47,10 +47,15 @@ export class RulesComponent implements OnInit, OnChanges {
 
   @Output() event = new EventEmitter<any>();
   
-  constructor() { }
+  constructor(
+    private storageService: StorageService
+  ) { }
 
   ngOnInit() {
-
+    const rules = this.storageService.getRules();
+    if (rules) {
+      this.rules = rules;
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -59,6 +64,7 @@ export class RulesComponent implements OnInit, OnChanges {
 
   ruleChanged(rule: Rule) {
     rule.yesNo = !rule.yesNo;
+    this.storageService.saveRules(this.rules);
     this.event.emit(this.getRules());
   }
 
