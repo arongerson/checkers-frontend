@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Chat } from '../model/interface';
 import { CREATOR_ID } from '../util/constants';
+import { Rule } from '../model/interface';
 
 const TOKEN_KEY = "token";
 const PLAYER_ID_KEY = "id";
@@ -10,6 +11,7 @@ const GAME_CODE_KEY = "gameCode";
 const GAME_OVER_KEY = "over";
 const UNREAD_KEY = "unread";
 const CHATS = "chats";
+const RULES = 'rules';
 
 @Injectable({
   providedIn: 'root'
@@ -128,5 +130,17 @@ export class StorageService {
       return true;
     }
     return playerId === CREATOR_ID;
+  }
+
+  saveRules(rules: Rule[]) {
+    sessionStorage.setItem(RULES, JSON.stringify(rules));
+  }
+
+  getRules(): Rule[] {
+    let rules = sessionStorage.getItem(RULES);
+    if (rules === undefined || rules === null) {
+      return null;
+    }
+    return JSON.parse(rules) as Rule[];
   }
 }
