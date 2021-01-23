@@ -13,6 +13,7 @@ export class LobbyComponent implements OnInit {
   opponentName: string;
   gameJoined = false;
   gameJoinedMessage: string;
+  boardSize: any;
 
   constructor(
     private storageService: StorageService
@@ -21,6 +22,8 @@ export class LobbyComponent implements OnInit {
   ngOnInit() {
     this.isCreator = this.storageService.isCreator();
     this.gameCode = this.storageService.getGameCode();
+    this.opponentName = this.storageService.getOpponentName();
+    this.boardSize = this.storageService.getBoardSize();
   }
 
 }

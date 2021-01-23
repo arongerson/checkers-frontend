@@ -151,7 +151,7 @@ export class StorageService {
   }
 
   getBoardSize() {
-    sessionStorage.getItem(BOARD_SIZE_KEY);
+    return sessionStorage.getItem(BOARD_SIZE_KEY);
   }
 
   saveOpponentName(opponentName: any) {
@@ -159,6 +159,6 @@ export class StorageService {
   }
 
   getOpponentName() {
-    sessionStorage.getItem(OPPONENT_NAME_KEY);
+    return sessionStorage.getItem(OPPONENT_NAME_KEY);
   }
 }
