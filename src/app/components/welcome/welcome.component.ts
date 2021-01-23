@@ -107,10 +107,11 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     this.storage.savePlayerId(content.playerId);
     this.submitted = false;
     this.gameCreated = true;
-    this.router.navigate(['play']);
+    this.router.navigate(['lobby']);
   }
 
   processGameJoined = (data) => {
+    // to be moved to the lobby component
     let content = JSON.parse(data);
     this.storage.savePlayerId(content.playerId);
     this.submitted = false;
@@ -118,7 +119,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   }
 
   processOtherJoined = (data) => {
-    this.router.navigate(['play']);
+    this.router.navigate(['lobby']);
   }
 
   deleteGame() {
