@@ -22,7 +22,7 @@
                                 <mat-radio-button value="8">8 x 8</mat-radio-button>
                                 <mat-radio-button value="10">10 x 10</mat-radio-button>
                             </mat-radio-group>
-                            <app-rules></app-rules>
+                            <app-rules [isCreator]="isCreator()"></app-rules>
                             <button 
                                 [disabled]="createForm.invalid || submitted"
                                 mat-raised-button 

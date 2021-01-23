@@ -33,7 +33,11 @@ export class StorageService {
   }
 
   static getPlayerId(): number {
-    return parseInt(sessionStorage.getItem(PLAYER_ID_KEY));
+    let playerId = sessionStorage.getItem(PLAYER_ID_KEY);
+    if (playerId) {
+      return parseInt(playerId);
+    }
+    return null;
   }
 
   clearToken() {

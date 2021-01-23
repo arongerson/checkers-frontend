@@ -1,5 +1,8 @@
-<mat-selection-list #shoes>
-    <mat-list-option *ngFor="let rule of rules">
-      {{shoe}}
+<h3 class="mat-h2">Rules</h3>
+<!-- <divider></divider> -->
+<mat-selection-list [disabled]="!isCreator" class="rules-panel">
+    <mat-list-option *ngFor="let rule of rules" [(selected)]="rule.yesNo" (click)="ruleChanged(rule)">
+      {{rule.description}}
     </mat-list-option>
 </mat-selection-list>
+<p></p>

@@ -1,10 +1,11 @@
-import { Component, OnInit, AfterViewInit, HostListener } from '@angular/core';
+import { Component, OnInit, AfterViewInit, ViewChild, HostListener } from '@angular/core';
 import { FormGroup, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { WebSocketsService } from '../../services/web-sockets.service';
 import { UtilService } from '../../services/util.service';
 import { StorageService } from '../../services/storage.service';
 import { ValidationService } from '../../services/validation.service';
+import { RulesComponent } from '../rules/rules.component';
 
 import {
   ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
@@ -12,6 +13,7 @@ import {
   ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_OTHER_CLOSED, ACTION_STATE, ACTION_OVER, CREATOR_ID,
   CREATOR_COLOR, JOINER_COLOR, ACTION_OTHER_JOINED
 } from '../../util/constants';
+import { Rule } from 'src/app/model/interface';
 
 @Component({
   selector: 'app-welcome',
@@ -38,6 +40,8 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     name: new FormControl('', this.validation.getNameValidators()),
     code: new FormControl('', this.validation.getCodeValidators())
   });
+
+  @ViewChild( RulesComponent, {static: false} ) rulesComponent: RulesComponent;
 
   constructor(
     private socketService: WebSocketsService,
@@ -88,10 +92,14 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
 
   isCreator() {
     let playerId = StorageService.getPlayerId();
+    if (playerId === undefined || playerId === null) {
+      return true;
+    }
     return playerId === CREATOR_ID;
   }
 
   processGameCreated = (data) => {
+    console.log(JSON.stringify(data))
     let content = JSON.parse(data);
     this.storage.saveGameCreated();
     this.generatedCode = content.gameCode;
@@ -99,6 +107,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     this.storage.savePlayerId(content.playerId);
     this.submitted = false;
     this.gameCreated = true;
+    this.router.navigate(['play']);
   }
 
   processGameJoined = (data) => {
@@ -120,7 +129,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     this.submitted = true;
     let playerName = this.createForm.controls.name.value;
     let boardSize = this.createForm.controls.boardSize.value;
-    this.socketService.createGame(playerName, boardSize);
+    this.socketService.createGame(playerName, boardSize, this.rulesComponent.getRules());
   }
 
   join() {
@@ -128,6 +137,10 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     let joinerName = this.joinForm.controls.name.value;
     let gameCode = this.joinForm.controls.code.value;
     this.socketService.joinGame(joinerName, gameCode);
+  }
+
+  ruleChanged(event) {
+    console.log(event);
   }
 
   cancelGame() {

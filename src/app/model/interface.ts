@@ -21,6 +21,7 @@ export interface Chat {
 
 export interface Rule {
     description: string;
+    key: string;
     yesNo: boolean;
 }
 

@@ -67,14 +67,15 @@ export class WebSocketsService {
     }
   }
 
-  createGame(playerName: string, boardSize) {
+  createGame(playerName: string, boardSize, rules: any) {
     this.webSocket.send(JSON.stringify(
       {
         code: ACTION_CREATE,
         data: JSON.stringify(
           {
             name: playerName,
-            boardSize: boardSize
+            boardSize: boardSize,
+            rules: rules
           }
         )
       }

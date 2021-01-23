@@ -13,7 +13,8 @@ import {
   MatDividerModule,
   MatRadioModule,
   MatBadgeModule,
-  MatSnackBarModule
+  MatSnackBarModule,
+  MatListModule
 } from '@angular/material';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -50,6 +51,7 @@ import { LobbyComponent } from './components/lobby/lobby.component';
     MatRadioModule,
     MatBadgeModule,
     MatSnackBarModule,
+    MatListModule,
     BrowserAnimationsModule
   ],
   providers: [],
