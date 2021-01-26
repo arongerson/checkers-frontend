@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { StorageService } from '../../services/storage.service';
 import { WebSocketsService } from '../../services/web-sockets.service';
 import { ACTION_OTHER_JOINED, ACTION_RULE_UPDATED, ACTION_CONNECT } from '../../util/constants';
+import { RulesComponent } from '../rules/rules.component';
 
 @Component({
   selector: 'app-lobby',
@@ -16,6 +17,7 @@ export class LobbyComponent implements OnInit {
   gameJoined = false;
   gameJoinedMessage: string;
   boardSize: any;
+  @ViewChild( RulesComponent, {static: false} ) rulesComponent: RulesComponent;
 
   constructor(
     private storage: StorageService,
@@ -38,7 +40,7 @@ export class LobbyComponent implements OnInit {
     if (code === ACTION_OTHER_JOINED) {
       this.processOtherJoined(payLoad.data);
     } else if (code === ACTION_RULE_UPDATED) {
-      this.processRuleUpdate(payLoad);
+      this.processRuleUpdate(payLoad.data);
     } else if (code === ACTION_CONNECT) {
       this.storage.saveToken(payLoad.data);
     }
@@ -58,6 +60,8 @@ export class LobbyComponent implements OnInit {
 
   processRuleUpdate(data) {
     console.log(data);
+    const content = JSON.parse(data);
+    this.rulesComponent.updateRules(content.rules);
   }
 
 }
