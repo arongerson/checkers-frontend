@@ -23,16 +23,16 @@ export class LobbyComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    // this.socket.connect();
     this.socket.onMessage(this.onMessage);
     this.isCreator = this.storage.isCreator();
     this.gameCode = this.storage.getGameCode();
     this.opponentName = this.storage.getOpponentName();
     this.boardSize = this.storage.getBoardSize();
+    this.gameJoined = this.storage.getGameJoined();
+    this.gameJoinedMessage = this.storage.getGameJoinedMessage();
   }
 
   onMessage = (data) => {
-    console.log("data", data);
     let payLoad = JSON.parse(data.data);
     let code = parseInt(payLoad.code);
     if (code === ACTION_OTHER_JOINED) {
@@ -40,19 +40,20 @@ export class LobbyComponent implements OnInit {
     } else if (code === ACTION_RULE_UPDATED) {
       this.processRuleUpdate(payLoad);
     } else if (code === ACTION_CONNECT) {
-      console.log(payLoad);
       this.storage.saveToken(payLoad.data);
     }
   }
 
   ruleUpdated(rules) {
-    console.log(rules);
     this.socket.updateRules(rules);
   }
 
   processOtherJoined = (data) => {
-    console.log("lobby other joined")
-    console.log(data);
+    const content = JSON.parse(data);
+    this.gameJoined = true;
+    this.gameJoinedMessage = content.info;
+    this.storage.saveGameJoined();
+    this.storage.saveGameJoinedMessage(content.info);
   }
 
   processRuleUpdate(data) {

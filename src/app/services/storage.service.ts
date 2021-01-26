@@ -14,6 +14,8 @@ const OPPONENT_NAME_KEY = 'opponent_name';
 const BOARD_SIZE_KEY = 'board_size';
 const CHATS = "chats";
 const RULES = 'rules';
+const GAME_JOINED_KEY = 'game_joined';
+const GAME_JOINED_MESSAGE_KEY = 'game_joined_message';
 
 @Injectable({
   providedIn: 'root'
@@ -161,4 +163,22 @@ export class StorageService {
   getOpponentName() {
     return sessionStorage.getItem(OPPONENT_NAME_KEY);
   }
+
+  saveGameJoinedMessage(message: string) {
+    sessionStorage.setItem(GAME_JOINED_MESSAGE_KEY, message);
+  }
+
+  getGameJoinedMessage(): string {
+    return sessionStorage.getItem(GAME_JOINED_MESSAGE_KEY);
+  }
+
+  saveGameJoined() {
+    sessionStorage.setItem(GAME_JOINED_KEY, "1");
+  }
+
+  getGameJoined(): boolean {
+    const value = sessionStorage.getItem(GAME_JOINED_KEY);
+    return value === "1";
+  }
+
 }
