@@ -21,6 +21,7 @@ export class LobbyComponent implements OnInit, AfterViewInit {
   boardSize: any;
   userVideo: any;
   partnerVideo: any;
+  roomId: string;
   @ViewChild( RulesComponent, {static: false} ) rulesComponent: RulesComponent;
 
   constructor(
@@ -37,13 +38,14 @@ export class LobbyComponent implements OnInit, AfterViewInit {
     this.opponentName = this.storage.getOpponentName();
     this.boardSize = this.storage.getBoardSize();
     this.gameJoined = this.storage.getGameJoined();
+    this.roomId = this.storage.getRoomId();
     this.gameJoinedMessage = this.storage.getGameJoinedMessage();
   }
 
   ngAfterViewInit() {
     this.userVideo = document.getElementById('userVideo');
     this.partnerVideo = document.getElementById('partnerVideo');
-    this.vchat.initVideo("", this.userVideo, this.partnerVideo, StorageService.getPlayerId(), false);
+    this.vchat.initVideo(this.roomId, this.userVideo, this.partnerVideo, StorageService.getPlayerId(), false);
   }
 
   onMessage = (data) => {

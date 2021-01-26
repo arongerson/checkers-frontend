@@ -16,6 +16,7 @@ const CHATS = "chats";
 const RULES = 'rules';
 const GAME_JOINED_KEY = 'game_joined';
 const GAME_JOINED_MESSAGE_KEY = 'game_joined_message';
+const ROOM_ID_KEY = 'room_id';
 
 @Injectable({
   providedIn: 'root'
@@ -179,6 +180,14 @@ export class StorageService {
   getGameJoined(): boolean {
     const value = sessionStorage.getItem(GAME_JOINED_KEY);
     return value === "1";
+  }
+
+  saveRoomId(roomId: string) {
+    sessionStorage.setItem(ROOM_ID_KEY, roomId);
+  }
+
+  getRoomId(): string {
+    return sessionStorage.getItem(ROOM_ID_KEY);
   }
 
 }

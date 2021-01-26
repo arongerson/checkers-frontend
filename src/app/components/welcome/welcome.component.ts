@@ -99,13 +99,13 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   }
 
   processGameCreated = (data) => {
-    console.log("game created: ", JSON.stringify(data));
     let content = JSON.parse(data);
     this.storage.saveGameCreated();
     this.generatedCode = content.gameCode;
     this.storage.saveGameCode(this.generatedCode);
     this.storage.savePlayerId(content.playerId);
     this.storage.saveBoardSize(content.boardSize);
+    this.storage.saveRoomId(content.vchatUuid);
     this.submitted = false;
     this.gameCreated = true;
     this.router.navigate(['lobby']);
@@ -116,6 +116,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     this.storage.savePlayerId(content.playerId);
     this.storage.saveBoardSize(content.boardSize);
     this.storage.saveOpponentName(content.creator);
+    this.storage.saveRoomId(content.vchatUuid);
     this.rulesComponent.updateRules(content.rules);
     this.submitted = false;
     this.router.navigate(['lobby']);
