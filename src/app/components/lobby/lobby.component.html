@@ -18,7 +18,7 @@
                             {{opponentName}} created the game
                         </div>
                         <p><label>Board size: <strong>{{boardSize}} by {{boardSize}}</strong></label></p>
-                        <app-rules [isCreator]="isCreator"></app-rules>
+                        <app-rules (event)="ruleUpdated($event)" [isCreator]="isCreator"></app-rules>
                     </mat-card-content>
                 </mat-card>
             </div>

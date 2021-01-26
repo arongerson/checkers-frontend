@@ -21,22 +21,22 @@ export class RulesComponent implements OnInit, OnChanges {
       yesNo: true
     },
     {
-      description: 'Ordinary piece can capture backwards',
+      description: 'Ordinary piece should continue capturing after reaching farthest row',
       key: 'shouldPieceContinueCapturingAfterFarthestRow',
       yesNo: true
     },
     {
-      description: 'King can move more than on step',
+      description: 'Should capture when possible',
       key: 'shouldCaptureWhenPossible',
       yesNo: true
     },
     {
-      description: 'Ordinary piece can capture backwards',
+      description: 'Should capture maximum pieces possible',
       key: 'shouldCaptureMaxPossible',
       yesNo: true
     },
     {
-      description: 'King can move more than on step',
+      description: 'Captured piece should be removed from board before further capturing',
       key: 'shouldDiscardCapturedPieceMomentarily',
       yesNo: true
     },

@@ -7,7 +7,7 @@ import { StorageService } from './storage.service';
 import {
   HOST, ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
   ACTION_LEAVE, ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
-  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STATE, WS_PROTOCOL
+  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STATE, WS_PROTOCOL, ACTION_RULE_UPDATED
 } from '../util/constants';
 import { on } from 'cluster';
 
@@ -29,11 +29,13 @@ export class WebSocketsService {
     if (this.closed) {
       this.closed = false;
       this.webSocket = this.initWebSocket();
+      console.log('webSocket: ', this.webSocket);
       if (this.webSocket) {
         this.webSocket.onopen = this.onOpen;
         this.webSocket.onerror = this.onError;
         this.webSocket.onclose = this.onClose;
         if (this.onMessageCallback) {
+          console.log('.... on message')
           this.webSocket.onMessage = this.onMessageCallback;
         }
       }
@@ -49,18 +51,21 @@ export class WebSocketsService {
   }
 
   onOpen = (data) => {
+    console.log("opening...")
     this.getGameState();
   }
 
   onError = (e) => {
-    console.log('error');
+    console.log('error: ',  e);
   }
 
-  onClose = () => {
+  onClose = (e) => {
+    console.log('event: ', e)
     console.log('closed connection');
   }
 
   onMessage(onMessageCallback: Function) {
+    console.log("setup on message")
     this.onMessageCallback = onMessageCallback;
     if (this.webSocket) {
       this.webSocket.onmessage = onMessageCallback;
@@ -115,6 +120,7 @@ export class WebSocketsService {
   }
 
   leaveGame() {
+    console.log("leaving game")
     this.webSocket.send(JSON.stringify(
       {
         code: ACTION_LEAVE,
@@ -140,6 +146,16 @@ export class WebSocketsService {
       {
         code: ACTION_CHAT,
         data: text
+      }
+    ));
+  }
+
+  updateRules(rules: any) {
+    console.log("updating the rule")
+    this.webSocket.send(JSON.stringify(
+      {
+        code: ACTION_RULE_UPDATED,
+        data: JSON.stringify(rules)
       }
     ));
   }

@@ -81,8 +81,8 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
       this.storage.saveToken(payLoad.data);
     } else if (code === ACTION_ERROR) {
     } else if (code === ACTION_OTHER_JOINED) {
-      this.processOtherJoined(payLoad.data);
     } else if (code === ACTION_OTHER_CONNECT) {
+      console.log("other joined");
     } else if (code === ACTION_REGISTER) {
     } else if (code === ACTION_INFO) {
     } else if (code === ACTION_CLOSED) {
@@ -118,11 +118,6 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
     this.storage.saveOpponentName(content.creator);
     this.rulesComponent.updateRules(content.rules);
     this.submitted = false;
-    this.router.navigate(['lobby']);
-  }
-
-  processOtherJoined = (data) => {
-    // to be moved to the lobby component
     this.router.navigate(['lobby']);
   }
 
