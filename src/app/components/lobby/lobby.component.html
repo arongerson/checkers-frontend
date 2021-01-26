@@ -18,6 +18,11 @@
                             {{opponentName}} created the game
                         </div>
                         <p><label>Board size: <strong>{{boardSize}} by {{boardSize}}</strong></label></p>
+                        <p *ngIf="isCreator">Your opponent will start the game if he/she agrees with the rules set.</p>
+                        <p *ngIf="!isCreator">
+                            Discuss with your opponent to update the rules, when satisfied, start the game, 
+                            rules can't be changed after the game has started.
+                        </p>
                         <app-rules (event)="ruleUpdated($event)" [isCreator]="isCreator"></app-rules>
                     </mat-card-content>
                 </mat-card>
