@@ -135,7 +135,8 @@ export class PlayComponent implements OnInit {
     this.gameOver = false;
     this.gameStarted = true;
     this.videoChatUuid = gameState.vchatUuid;
-    this.vchatService.initVideo(this.videoChatUuid, this.userVideo, this.partnerVideo, StorageService.getPlayerId());
+    const join = true;
+    this.vchatService.initVideo(this.videoChatUuid, this.userVideo, this.partnerVideo, StorageService.getPlayerId(), join);
     this.processGameState();
   }
 

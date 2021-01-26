@@ -37,7 +37,24 @@
             <div *ngIf="!gameCreated" class="lobby-panels video">
                 <mat-card>
                     <mat-card-content>
-    
+                        <div class="video-container">
+                            <video autoPlay id="userVideo" class="chat-video"></video>
+                            <div class="video-controls">
+                                <mat-icon class="icon" aria-hidden="false" aria-label="menu" >
+                                    <!-- mic -->
+                                    mic_off
+                                </mat-icon>
+                                <mat-icon 
+                                    class="icon" 
+                                    aria-hidden="false" 
+                                    aria-label="video cam off">
+                                    videocam_off
+                                </mat-icon>
+                                <span class="spacer"></span>
+                                <button mat-raised-button color="accent">Join</button>
+                            </div>
+                        </div>
+                        <video autoPlay id="partnerVideo" class="chat-video"></video>
                     </mat-card-content>
                 </mat-card>
             </div>

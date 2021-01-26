@@ -99,7 +99,7 @@ export class WelcomeComponent implements OnInit, AfterViewInit {
   }
 
   processGameCreated = (data) => {
-    console.log(JSON.stringify(data))
+    console.log("game created: ", JSON.stringify(data));
     let content = JSON.parse(data);
     this.storage.saveGameCreated();
     this.generatedCode = content.gameCode;

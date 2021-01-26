@@ -17,7 +17,7 @@ export class VchatService {
 
     constructor() { }
 
-    initVideo = (roomID, userVideo, partnerVideo, playerID) => {
+    initVideo = (roomID, userVideo, partnerVideo, playerID, join) => {
         this.userVideo = userVideo;
         this.partnerVideo = partnerVideo;
         navigator.mediaDevices.getUserMedia({ audio: true, video: true }).then(stream => {
@@ -25,7 +25,12 @@ export class VchatService {
             this.userVideo.srcObject = stream;
             this.userStream = stream;
             this.socketRef = io(VIDEO_CHAT_SERVER);
-            this.socketRef.emit("join room", `${roomID}:${playerID}`);
+            if (join) {
+                // at the lobby, we wait for the user to consent joining
+                // after the game has started we check the consent before deciding to join
+                // checking the consent yet to be implemented
+                this.join(roomID, playerID);
+            }
 
             this.socketRef.on('other user', userID => {
                 console.log("Calling..." + userID)
@@ -38,11 +43,13 @@ export class VchatService {
             });
 
             this.socketRef.on("offer", this.handleReceiveCall);
-
             this.socketRef.on("answer", this.handleAnswer);
-
             this.socketRef.on("ice-candidate", this.handleNewICECandidateMsg);
         });
+    }
+
+    join(roomID, playerID) {
+        this.socketRef.emit("join room", `${roomID}:${playerID}`);
     }
 
     callUser = (userID) => {

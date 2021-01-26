@@ -1,7 +1,8 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild, AfterViewInit } from '@angular/core';
 import { Router } from '@angular/router';
 import { StorageService } from '../../services/storage.service';
 import { WebSocketsService } from '../../services/web-sockets.service';
+import { VchatService } from '../../services/vchat.service';
 import { ACTION_OTHER_JOINED, ACTION_RULE_UPDATED, ACTION_CONNECT, ACTION_STATE } from '../../util/constants';
 import { RulesComponent } from '../rules/rules.component';
 
@@ -10,7 +11,7 @@ import { RulesComponent } from '../rules/rules.component';
   templateUrl: './lobby.component.html',
   styleUrls: ['./lobby.component.scss']
 })
-export class LobbyComponent implements OnInit {
+export class LobbyComponent implements OnInit, AfterViewInit {
 
   isCreator = false;
   gameCode: string;
@@ -18,11 +19,14 @@ export class LobbyComponent implements OnInit {
   gameJoined = false;
   gameJoinedMessage: string;
   boardSize: any;
+  userVideo: any;
+  partnerVideo: any;
   @ViewChild( RulesComponent, {static: false} ) rulesComponent: RulesComponent;
 
   constructor(
     private storage: StorageService,
     private socket: WebSocketsService,
+    private vchat: VchatService,
     private router: Router
   ) { }
 
@@ -34,6 +38,12 @@ export class LobbyComponent implements OnInit {
     this.boardSize = this.storage.getBoardSize();
     this.gameJoined = this.storage.getGameJoined();
     this.gameJoinedMessage = this.storage.getGameJoinedMessage();
+  }
+
+  ngAfterViewInit() {
+    this.userVideo = document.getElementById('userVideo');
+    this.partnerVideo = document.getElementById('partnerVideo');
+    this.vchat.initVideo("", this.userVideo, this.partnerVideo, StorageService.getPlayerId(), false);
   }
 
   onMessage = (data) => {
@@ -68,7 +78,6 @@ export class LobbyComponent implements OnInit {
   }
 
   startGame() {
-    console.log("start game");
     this.socket.startGame();
   }
 
