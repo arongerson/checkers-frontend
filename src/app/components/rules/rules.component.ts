@@ -65,9 +65,11 @@ export class RulesComponent implements OnInit, OnChanges {
   }
 
   ruleChanged(rule: Rule) {
-    rule.yesNo = !rule.yesNo;
-    this.storageService.saveRules(this.rules);
-    this.event.emit(this.getRules());
+    if (this.isCreator) {
+      rule.yesNo = !rule.yesNo;
+      this.storageService.saveRules(this.rules);
+      this.event.emit(this.getRules());
+    }
   }
 
   getRules() {
