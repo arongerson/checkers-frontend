@@ -11,6 +11,7 @@ if (environment.production) {
 export const HOST = host;
 export const VIDEO_CHAT_SERVER = videoChatServer;
 export const WS_PROTOCOL = wsProtocol;
+export const MAX_CALL_RETRIES = 4;
 
 export const ACTION_REGISTER = 1;
 export const ACTION_LOGIN = 2;

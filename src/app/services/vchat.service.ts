@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { io } from 'socket.io-client';
-import { VIDEO_CHAT_SERVER } from '../util/constants';
+import { VIDEO_CHAT_SERVER, MAX_CALL_RETRIES } from '../util/constants';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +13,7 @@ export class VchatService {
     partnerVideo: any;
     otherUser: any;
     peerRef: any;
+    retries = 0;
 
     constructor() { }
 
@@ -112,13 +113,14 @@ export class VchatService {
 
     handleAnswer = (message) => {
         console.log("...handle answer...")
-        console.log("connected")
         const desc = new RTCSessionDescription(message.sdp);
         console.log(this.peerRef)
         this.peerRef.setRemoteDescription(desc).catch(e => {
             console.log(e)
-            console.log("...recall...");
-            this.callUser(this.otherUser);
+            if (this.retries <= MAX_CALL_RETRIES) {
+                this.callUser(this.otherUser);
+                this.retries++;
+            }
         });
     }
 
