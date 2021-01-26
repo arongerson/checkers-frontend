@@ -24,6 +24,13 @@
                             rules can't be changed after the game has started.
                         </p>
                         <app-rules (event)="ruleUpdated($event)" [isCreator]="isCreator"></app-rules>
+                        <button *ngIf="!isCreator"
+                            mat-raised-button 
+                            color="primary" 
+                            class="full-width" 
+                            (click)="startGame()">
+                            Start
+                        </button>
                     </mat-card-content>
                 </mat-card>
             </div>

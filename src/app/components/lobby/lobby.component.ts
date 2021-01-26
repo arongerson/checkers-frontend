@@ -1,7 +1,8 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
+import { Router } from '@angular/router';
 import { StorageService } from '../../services/storage.service';
 import { WebSocketsService } from '../../services/web-sockets.service';
-import { ACTION_OTHER_JOINED, ACTION_RULE_UPDATED, ACTION_CONNECT } from '../../util/constants';
+import { ACTION_OTHER_JOINED, ACTION_RULE_UPDATED, ACTION_CONNECT, ACTION_STATE } from '../../util/constants';
 import { RulesComponent } from '../rules/rules.component';
 
 @Component({
@@ -21,7 +22,8 @@ export class LobbyComponent implements OnInit {
 
   constructor(
     private storage: StorageService,
-    private socket: WebSocketsService
+    private socket: WebSocketsService,
+    private router: Router
   ) { }
 
   ngOnInit() {
@@ -43,6 +45,8 @@ export class LobbyComponent implements OnInit {
       this.processRuleUpdate(payLoad.data);
     } else if (code === ACTION_CONNECT) {
       this.storage.saveToken(payLoad.data);
+    } else if (code === ACTION_STATE) {
+      this.router.navigate(['play']);
     }
   }
 
@@ -59,9 +63,13 @@ export class LobbyComponent implements OnInit {
   }
 
   processRuleUpdate(data) {
-    console.log(data);
     const content = JSON.parse(data);
     this.rulesComponent.updateRules(content.rules);
+  }
+
+  startGame() {
+    console.log("start game");
+    this.socket.startGame();
   }
 
 }

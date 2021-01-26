@@ -7,7 +7,8 @@ import { StorageService } from './storage.service';
 import {
   HOST, ACTION_CHAT, ACTION_CONNECT, ACTION_CREATE, ACTION_ERROR, ACTION_JOIN,
   ACTION_LEAVE, ACTION_LOGIN, ACTION_OTHER_CONNECT, ACTION_PLAY, ACTION_REGISTER,
-  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STATE, WS_PROTOCOL, ACTION_RULE_UPDATED
+  ACTION_RESTART, ACTION_INFO, ACTION_CLOSED, ACTION_STATE, WS_PROTOCOL, ACTION_RULE_UPDATED,
+  ACTION_ACCEPT
 } from '../util/constants';
 import { on } from 'cluster';
 
@@ -151,11 +152,19 @@ export class WebSocketsService {
   }
 
   updateRules(rules: any) {
-    console.log("updating the rule")
     this.webSocket.send(JSON.stringify(
       {
         code: ACTION_RULE_UPDATED,
         data: JSON.stringify(rules)
+      }
+    ));
+  }
+
+  startGame() {
+    this.webSocket.send(JSON.stringify(
+      {
+        code: ACTION_ACCEPT,
+        data: ""
       }
     ));
   }

@@ -30,6 +30,7 @@ export const ACTION_OVER = 15;
 export const ACTION_OTHER_CLOSED = 16;
 export const ACTION_OTHER_JOINED = 17;
 export const ACTION_RULE_UPDATED = 18;
+export const ACTION_ACCEPT = 19;
 
 export const OFFSET_X_ATTR = "xOffset";
 export const OFFSET_Y_ATTR = "yOffset";
