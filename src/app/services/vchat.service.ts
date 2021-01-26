@@ -27,8 +27,9 @@ export class VchatService {
             this.socketRef.emit("join room", `${roomID}:${playerID}`);
 
             this.socketRef.on('other user', userID => {
-                this.callUser(userID);
+                console.log("Calling..." + userID)
                 this.otherUser = userID;
+                this.callUser(userID);
             });
 
             this.socketRef.on("user joined", userID => {
@@ -45,7 +46,10 @@ export class VchatService {
 
     callUser = (userID) => {
         this.peerRef = this.createPeer(userID);
-        this.userStream.getTracks().forEach(track => this.peerRef.addTrack(track, this.userStream));
+        this.userStream.getTracks().forEach(track => {
+            console.log("track: ", track);
+            this.peerRef.addTrack(track, this.userStream);
+        });
     }
 
     createPeer = (userID) => {
@@ -65,11 +69,15 @@ export class VchatService {
         peer.onicecandidate = this.handleICECandidateEvent;
         peer.ontrack = this.handleTrackEvent;
         peer.onnegotiationneeded = () => this.handleNegotiationNeededEvent(userID);
+        // Workaround for Chrome: skip nested negotiations
+        peer.onsignalingstatechange = (e) => { 
+        }
 
         return peer;
     }
 
     handleNegotiationNeededEvent = (userID) => {
+        console.log("...handleNegotiationNeededEvent...")
         this.peerRef.createOffer().then(offer => {
             return this.peerRef.setLocalDescription(offer);
         }).then(() => {
@@ -83,6 +91,7 @@ export class VchatService {
     }
 
     handleReceiveCall = (incoming) => {
+        console.log("...handleReceiveCall...")
         this.peerRef = this.createPeer(incoming.caller);
         const desc = new RTCSessionDescription(incoming.sdp);
         this.peerRef.setRemoteDescription(desc).then(() => {
@@ -102,12 +111,21 @@ export class VchatService {
     }
 
     handleAnswer = (message) => {
+        console.log("...handle answer...")
+        console.log("connected")
         const desc = new RTCSessionDescription(message.sdp);
-        this.peerRef.setRemoteDescription(desc).catch(e => console.log(e));
+        console.log(this.peerRef)
+        this.peerRef.setRemoteDescription(desc).catch(e => {
+            console.log(e)
+            console.log("...recall...");
+            this.callUser(this.otherUser);
+        });
     }
 
     handleICECandidateEvent = (e) => {
+        console.log("...handleICECandidateEvent...")
         if (e.candidate) {
+            console.log("candidate: ", e);
             const payload = {
                 target: this.otherUser,
                 candidate: e.candidate,
@@ -117,13 +135,14 @@ export class VchatService {
     }
 
     handleNewICECandidateMsg = (incoming) => {
+        console.log("...handleNewICECandidateMsg...")
         const candidate = new RTCIceCandidate(incoming);
-
         this.peerRef.addIceCandidate(candidate)
             .catch(e => console.log(e));
     }
 
     handleTrackEvent = (e) => {
+        console.log("...handleTrackEvent...")
         this.partnerVideo.srcObject = e.streams[0];
     }
   
