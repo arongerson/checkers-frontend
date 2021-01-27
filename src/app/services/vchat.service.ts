@@ -85,7 +85,6 @@ export class VchatService {
     }
 
     handleNegotiationNeededEvent = (userID) => {
-        console.log("...handleNegotiationNeededEvent...")
         this.peerRef.createOffer().then(offer => {
             return this.peerRef.setLocalDescription(offer);
         }).then(() => {
@@ -99,7 +98,6 @@ export class VchatService {
     }
 
     handleReceiveCall = (incoming) => {
-        console.log("...handleReceiveCall...")
         this.peerRef = this.createPeer(incoming.caller);
         const desc = new RTCSessionDescription(incoming.sdp);
         this.peerRef.setRemoteDescription(desc).then(() => {
@@ -119,7 +117,6 @@ export class VchatService {
     }
 
     handleAnswer = (message) => {
-        console.log("...handle answer...")
         const desc = new RTCSessionDescription(message.sdp);
         console.log(this.peerRef)
         this.peerRef.setRemoteDescription(desc).catch(e => {
@@ -132,7 +129,6 @@ export class VchatService {
     }
 
     handleICECandidateEvent = (e) => {
-        console.log("...handleICECandidateEvent...")
         if (e.candidate) {
             console.log("candidate: ", e);
             const payload = {
@@ -144,15 +140,19 @@ export class VchatService {
     }
 
     handleNewICECandidateMsg = (incoming) => {
-        console.log("...handleNewICECandidateMsg...")
         const candidate = new RTCIceCandidate(incoming);
         this.peerRef.addIceCandidate(candidate)
             .catch(e => console.log(e));
     }
 
     handleTrackEvent = (e) => {
-        console.log("...handleTrackEvent...")
-        this.partnerVideo.srcObject = e.streams[0];
+        // when the partner video connects 
+        // place the partner video in a bigger div and the user video 
+        // in the smaller div
+        this.partnerVideo.srcObject = this.userStream;
+        this.partnerVideo.muted = true;
+        this.userVideo.srcObject = e.streams[0];
+        this.userVideo.muted = false;
     }
   
 }
