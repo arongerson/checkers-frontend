@@ -14,6 +14,7 @@ import { RulesComponent } from '../rules/rules.component';
 export class LobbyComponent implements OnInit, AfterViewInit {
 
   isCreator = false;
+  playerId: any;
   gameCode: string;
   opponentName: string;
   gameJoined = false;
@@ -22,6 +23,10 @@ export class LobbyComponent implements OnInit, AfterViewInit {
   userVideo: any;
   partnerVideo: any;
   roomId: string;
+  isMicrophoneOn = false;
+  isVideoCamOn = false;
+  joined = false;
+
   @ViewChild( RulesComponent, {static: false} ) rulesComponent: RulesComponent;
 
   constructor(
@@ -39,13 +44,14 @@ export class LobbyComponent implements OnInit, AfterViewInit {
     this.boardSize = this.storage.getBoardSize();
     this.gameJoined = this.storage.getGameJoined();
     this.roomId = this.storage.getRoomId();
+    this.playerId = StorageService.getPlayerId();
     this.gameJoinedMessage = this.storage.getGameJoinedMessage();
   }
 
   ngAfterViewInit() {
     this.userVideo = document.getElementById('userVideo');
     this.partnerVideo = document.getElementById('partnerVideo');
-    this.vchat.initVideo(this.roomId, this.userVideo, this.partnerVideo, StorageService.getPlayerId(), false);
+    this.vchat.initVideo(this.roomId, this.userVideo, this.partnerVideo, this.playerId, false);
   }
 
   onMessage = (data) => {
@@ -81,6 +87,19 @@ export class LobbyComponent implements OnInit, AfterViewInit {
 
   startGame() {
     this.socket.startGame();
+  }
+
+  toggleMicrophone() {
+    this.isMicrophoneOn = !this.isMicrophoneOn;
+  }
+
+  toggleVideoCam() {
+    this.isVideoCamOn = !this.isVideoCamOn;
+  }
+
+  joinVideoChat() {
+    this.joined = true;
+    this.vchat.join(this.roomId, this.playerId);
   }
 
 }

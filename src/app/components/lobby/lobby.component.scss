@@ -121,6 +121,7 @@ mat-form-field {
 .icon {
     padding: 0 14px;
     cursor: pointer;
+    color: #00b0ff;
 }
 
 .spacer {
@@ -136,11 +137,11 @@ mat-form-field {
 }
 
 .chat-video {
-    height: inherit;
+    width: inherit;
 }
 
 .video-container {
-    height: 15rem;
+    width: 100%;
     position: relative;
 }
 
@@ -155,4 +156,13 @@ mat-form-field {
 
 .video-controls > * {
     margin: 0.5rem;
+}
+
+.mini-video {
+    margin: 1rem;
+    width: 20%;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    border: 1px solid #00b0ff;
 }
